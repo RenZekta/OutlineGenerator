@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 <style>
 :root{
   --bg:#0a0e1a; --bg-elev:#11172a; --bg-elev-2:#19203a; --bg-viewport:#0c1120;
@@ -28,15 +29,13 @@ body{
     radial-gradient(ellipse 800px 600px at 90% 100%,rgba(34,211,238,0.04),transparent 60%);
   background-attachment:fixed; min-height:100vh; display:flex; flex-direction:column;
 }
-
-/* Shared Header */
 .app-header{
   display:flex; align-items:center; justify-content:space-between;
   padding:18px 28px; border-bottom:1px solid var(--border);
   background:rgba(10,14,26,0.7); backdrop-filter:blur(12px);
   position:sticky; top:0; z-index:50;
 }
-.brand{display:flex;align-items:center;gap:14px}
+.brand{display:flex;align-items:center;gap:14px;cursor:pointer;}
 .brand-mark{width:38px;height:38px;position:relative;display:flex;align-items:center;justify-content:center}
 .brand-mark svg{width:100%;height:100%}
 .brand-mark::after{
@@ -67,17 +66,15 @@ body{
 .btn-back{padding:8px 14px; font-size:11px;}
 .btn-back svg{width:14px;height:14px}
 
-/* View Toggling */
 .view-container{display:none; flex:1; flex-direction:column;}
 .view-container.active{display:flex;}
 
 /* Dashboard */
 .dashboard{
-  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  padding: 40px;
+  flex:1; display:flex; flex-direction:column; align-items:center; padding: 40px 20px;
 }
 .dash-intro{
-  text-align:center; margin-bottom:50px;
+  text-align:center; margin-bottom:40px;
 }
 .dash-intro h2{
   font-size: 32px; font-weight: 300; letter-spacing: -0.02em;
@@ -90,29 +87,28 @@ body{
   letter-spacing: 0.1em; text-transform: uppercase;
 }
 .tools-grid{
-  display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
-  gap:24px; width:100%; max-width:800px;
+  display:flex; flex-direction:column; gap:24px; width:100%; max-width:800px;
 }
 .tool-card{
   background:var(--bg-elev); border:1px solid var(--border); border-radius:16px;
   padding:28px; cursor:pointer; transition:all 0.3s ease;
-  display:flex; flex-direction:column; gap:16px; position:relative; overflow:hidden;
+  display:flex; align-items:center; gap:24px; position:relative; overflow:hidden;
 }
 .tool-card::before{
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-  background:linear-gradient(90deg,transparent,var(--accent),transparent);
-  opacity:0; transition:opacity 0.3s;
+  content:''; position:absolute; top:0; left:0; bottom:0; width:3px;
+  background:var(--accent); opacity:0; transition:opacity 0.3s;
 }
 .tool-card:hover{
-  border-color:var(--accent); transform:translateY(-4px);
-  box-shadow:0 12px 40px rgba(0,0,0,0.3);
+  border-color:var(--accent); transform:translateX(4px);
+  box-shadow:0 8px 30px rgba(0,0,0,0.2);
 }
 .tool-card:hover::before{opacity:1;}
 .tool-card.cyan:hover{border-color:var(--secondary);}
-.tool-card.cyan::before{background:linear-gradient(90deg,transparent,var(--secondary),transparent);}
+.tool-card.cyan::before{background:var(--secondary);}
 .tool-icon{
   width:56px; height:56px; border-radius:12px; background:var(--bg-viewport);
   display:flex; align-items:center; justify-content:center; border:1px solid var(--border);
+  flex-shrink: 0;
 }
 .tool-icon svg{width:32px; height:32px;}
 .tool-info h3{font-size:18px; font-weight:600; margin-bottom:6px;}
@@ -164,16 +160,32 @@ body{
     linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),
     linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);
   background-size:24px 24px;overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
 }
 .viewport::after{
   content:'';position:absolute;inset:0;
   background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.4) 100%);
   pointer-events:none;
 }
-.viewport svg{width:100%;height:100%;display:block;position:relative;z-index:1}
+.viewport.delete-mode { cursor: crosshair; }
+.viewport.delete-mode .preview-overlay path { pointer-events: stroke; cursor: not-allowed; }
 #svg-partial{cursor:crosshair}
 
-/* Tracer Viewport & Drop Zone */
+.viewport-controls {
+  position: absolute; top: 8px; right: 8px;
+  display: flex; flex-direction: column; gap: 6px; z-index: 20;
+}
+.ctrl-btn {
+  width: 32px; height: 32px; border-radius: 5px;
+  border: 1px solid var(--border-strong); background: rgba(10,14,26,0.85);
+  color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; font-family: inherit;
+}
+.ctrl-btn:hover{color:var(--accent);border-color:var(--accent)}
+.ctrl-btn svg{width:16px;height:16px;}
+.ctrl-btn.disabled{opacity:0.3;pointer-events:none;}
+.ctrl-btn.active{color:var(--warning);border-color:var(--warning);}
+
 .drop-zone{
   position:absolute;inset:20px;border:2px dashed var(--border-strong);
   border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -184,38 +196,48 @@ body{
 .drop-zone-icon{font-size:3rem;color:var(--text-dim);margin-bottom:10px}
 .drop-zone-text{font-size:0.95rem;color:var(--text-muted)}
 .drop-zone-hint{font-size:0.8rem;color:var(--text-dim);margin-top:6px;}
+
 .preview-wrapper{
   position:relative;width:100%;height:100%;display:none;align-items:center;justify-content:center;
-  z-index:1;
+  z-index:1; overflow:hidden;
 }
 .preview-wrapper.active{display:flex;}
+.preview-content {
+  position: relative; transform-origin: center center;
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center;
+}
+.preview-content.panning { transition: none; }
+
 .preview-wrapper img{
-  max-width:100%;max-height:100%;display:block;
-  filter:drop-shadow(0 4px 20px rgba(0,0,0,0.5));
+  max-width: 100%; max-height: 100%; display: block;
+  filter:drop-shadow(0 4px 20px rgba(0,0,0,0.5)); transition: opacity 0.3s;
 }
 .preview-overlay{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  pointer-events:none;
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  pointer-events:none; transition: opacity 0.3s;
 }
 .preview-overlay svg{
-  display:block;filter:drop-shadow(0 0 6px var(--accent-glow));
+  width: 100%; height: 100%; display:block;filter:drop-shadow(0 0 6px var(--accent-glow));
 }
 #processingCanvas{display:none}
-
-.btn-reset-zoom{
-  position:absolute;top:8px;right:8px;width:28px;height:28px;
-  border-radius:5px;border:1px solid var(--border-strong);
-  background:rgba(10,14,26,0.85);color:var(--text-muted);cursor:pointer;
-  font-size:14px;display:none;align-items:center;justify-content:center;
-  z-index:5;transition:all 0.2s;font-family:inherit;
-}
-.btn-reset-zoom:hover{color:var(--accent);border-color:var(--accent)}
-.btn-reset-zoom.visible{display:flex;}
 
 .controls{
   padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;
   border-top:1px solid var(--border);background:rgba(0,0,0,0.15);
 }
+.page-controls {
+  display: flex; gap: 10px; align-items: center;
+  background: var(--bg-elev-2); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);
+}
+.page-controls button {
+  background: transparent; border: 1px solid var(--border-strong); color: var(--text-muted);
+  border-radius: 4px; padding: 4px 10px; cursor: pointer; transition: all 0.2s;
+}
+.page-controls button:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+.page-controls button:disabled { opacity: 0.3; cursor: not-allowed; }
+.page-controls span { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); margin-left: auto; }
+
 .mode-switcher{
   display:flex;background:var(--bg-viewport);border:1px solid var(--border);
   border-radius:6px;padding:3px;gap:3px;
@@ -226,9 +248,8 @@ body{
   padding:6px 0;border-radius:4px;cursor:pointer;transition:all 0.2s;font-family:inherit;
 }
 .btn-mode.active{background:var(--bg-elev-2);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,0.3)}
-.panel.partial .btn-mode.active{color:var(--secondary)}
 
-.bg-selector{display:grid;grid-template-columns:repeat(4, 1fr);gap:6px;}
+.bg-selector{display:grid;grid-template-columns:repeat(2, 1fr);gap:6px;}
 .btn-bg{
   background:var(--bg-elev-2);border:1px solid var(--border-strong);color:var(--text-muted);
   font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;
@@ -237,8 +258,28 @@ body{
 }
 .btn-bg:hover{border-color:var(--accent);color:var(--text)}
 .btn-bg.active{background:rgba(251,191,36,0.12);border-color:var(--accent);color:var(--accent)}
-.btn-bg.color-pick{padding:4px;flex-direction:column;gap:2px}
-.btn-bg input[type="color"]{width:100%;height:20px;border:none;background:transparent;cursor:pointer;border-radius:3px;}
+
+.target-color-row{
+  display:flex;align-items:center;justify-content:space-between;padding:8px 10px;
+  background:var(--bg-elev-2);border-radius:6px;border:1px solid var(--border);gap:10px;
+}
+.target-color-row label{font-size:11px;letter-spacing:0.04em;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:8px;}
+.target-color-row input[type="color"]{
+  width:32px;height:20px;border:none;background:transparent;cursor:pointer;border-radius:3px;padding:0;
+}
+.target-color-row.disabled{opacity:0.3;pointer-events:none}
+
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;padding:8px 10px;
+  background:var(--bg-elev-2);border-radius:6px;border:1px solid var(--border);
+}
+.toggle-row label{font-size:11px;letter-spacing:0.04em;color:var(--text-muted);cursor:pointer}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--bg);border:1px solid var(--border-strong);border-radius:10px;transition:all 0.25s}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;background:var(--text-dim);border-radius:50%;transition:all 0.25s}
+.toggle input:checked ~ .toggle-track{background:rgba(34,211,238,0.2);border-color:var(--secondary)}
+.toggle input:checked ~ .toggle-thumb{left:18px;background:var(--secondary);box-shadow:0 0 8px var(--secondary-glow)}
 
 .control-group{display:flex;flex-direction:column;gap:6px;transition:opacity 0.2s}
 .control-group.disabled{opacity:0.3;pointer-events:none}
@@ -320,18 +361,6 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 .btn-icon.danger:hover:not(:disabled){color:var(--warning);border-color:var(--warning)}
 .action-info{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);text-align:center;padding:0 6px;flex:0 0 auto;}
 
-.toggle-row{
-  display:flex;align-items:center;justify-content:space-between;padding:8px 10px;
-  background:var(--bg-elev-2);border-radius:6px;border:1px solid var(--border);margin-top:2px;
-}
-.toggle-row label{font-size:11px;letter-spacing:0.04em;color:var(--text-muted);cursor:pointer}
-.toggle{position:relative;width:36px;height:20px;cursor:pointer}
-.toggle input{opacity:0;width:0;height:0;position:absolute}
-.toggle-track{position:absolute;inset:0;background:var(--bg);border:1px solid var(--border-strong);border-radius:10px;transition:all 0.25s}
-.toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;background:var(--text-dim);border-radius:50%;transition:all 0.25s}
-.toggle input:checked ~ .toggle-track{background:rgba(34,211,238,0.2);border-color:var(--secondary)}
-.toggle input:checked ~ .toggle-thumb{left:18px;background:var(--secondary);box-shadow:0 0 8px var(--secondary-glow)}
-
 .preview-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border)}
 .preview-stats-3{grid-template-columns:repeat(3,1fr);}
 .stat{background:var(--bg-elev);padding:12px 10px;text-align:center}
@@ -376,7 +405,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 
 .processing-overlay{
   position:absolute;inset:0;background:rgba(10,14,26,0.8);backdrop-filter:blur(4px);
-  display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;
+  display:flex;align-items:center;justify-content:center;z-index:30;opacity:0;
   pointer-events:none;transition:opacity 0.2s;
 }
 .processing-overlay.active{opacity:1;pointer-events:auto}
@@ -388,6 +417,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
   font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);
   letter-spacing:0.05em;text-align:center;pointer-events:none;
   background:rgba(10,14,26,0.6);padding:4px 8px;border-radius:4px;
+  z-index: 20;
 }
 
 @media (max-width:1280px){
@@ -399,7 +429,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 <body>
 
 <header class="app-header">
-  <div class="brand" id="main-brand" style="cursor:pointer;">
+  <div class="brand" id="main-brand">
     <div class="brand-mark">
       <svg viewBox="0 0 40 40">
         <defs>
@@ -438,7 +468,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
       <p>Self-contained browser utilities</p>
     </div>
     <div class="tools-grid">
-      <div class="tool-card cyan" id="card-trace">
+      <div class="tool-card cyan" data-tool="view-outline">
         <div class="tool-icon">
           <svg viewBox="0 0 40 40">
             <path d="M 20 5 A 15 15 0 0 0 20 35 L 20 5 Z" fill="#fbbf24" stroke="none"/>
@@ -446,12 +476,12 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
           </svg>
         </div>
         <div class="tool-info">
-          <h3>Vector Tracer</h3>
+          <h3>Outline Tracer</h3>
           <p>Convert raster images to clean SVG outlines. Uses marching squares and automatic background detection to generate precise vector paths.</p>
         </div>
       </div>
       
-      <div class="tool-card" id="card-simplify">
+      <div class="tool-card" data-tool="view-simplify">
         <div class="tool-icon">
           <svg viewBox="0 0 40 40">
             <path d="M 5 30 Q 12 5, 20 25" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
@@ -465,7 +495,136 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
           <p>Optimize SVG paths with curve-aware simplification. Reduces point count while preserving geometry using Visvalingam-Whyatt and recursive curve fitting.</p>
         </div>
       </div>
+
+      <div class="tool-card cyan" data-tool="view-image">
+        <div class="tool-icon">
+          <svg viewBox="0 0 40 40">
+            <rect x="6" y="6" width="28" height="28" rx="4" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+            <path d="M 12 20 Q 20 10, 28 20" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 12 28 L 28 28" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="tool-info">
+          <h3>Image Tracer</h3>
+          <p>Convert full images to SVG vectors. Features edge detection, colorful region mapping, and blueprint centerline extraction.</p>
+        </div>
+      </div>
+
+      <div class="tool-card" data-tool="view-pdf">
+        <div class="tool-icon">
+          <svg viewBox="0 0 40 40">
+            <path d="M 10 5 H 25 L 30 10 V 35 H 10 Z" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M 15 20 H 25 M 15 25 H 20" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="tool-info">
+          <h3>PDF Vector Extractor</h3>
+          <p>Extract native vector paths from PDF files. Convert embedded lines and curves directly to SVG format without rasterization.</p>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- OUTLINE TRACER VIEW -->
+<div class="view-container" id="view-outline">
+  <div class="tool-header">
+    <div class="tool-header-left">
+      <div class="tool-header-icon">
+        <svg viewBox="0 0 40 40">
+          <path d="M 20 5 A 15 15 0 0 0 20 35 L 20 5 Z" fill="#fbbf24" stroke="none"/>
+          <path d="M 20 5 A 15 15 0 0 1 20 35" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="tool-header-title">
+        <h2>Outline Tracer</h2>
+        <p>Marching squares · curve fitting</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <label class="btn" style="position:relative;overflow:hidden;cursor:pointer;display:inline-flex;">
+        Load Image<input type="file" id="file-input-outline" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0;">
+      </label>
+      <button class="btn primary" id="btn-export-outline" disabled>Export SVG</button>
+    </div>
+  </div>
+  <div class="workspace workspace-single">
+    <section class="panel global" id="panel-outline">
+      <header class="panel-header">
+        <span class="panel-num">01</span>
+        <div><h3>Image Tracer</h3><p>Marching squares · curve fitting</p></div>
+        <span class="panel-status" id="outline-status">No image</span>
+      </header>
+      <div class="viewport" id="viewport-outline">
+        <div class="drop-zone" id="drop-zone-outline">
+          <span class="drop-zone-icon">🖼️</span>
+          <span class="drop-zone-text">Drop, Paste, or Click to browse</span>
+          <span class="drop-zone-hint">PNG, JPG, WebP, GIF (Ctrl+V supported)</span>
+        </div>
+        <div class="preview-wrapper" id="preview-wrapper-outline">
+          <div class="preview-content" id="preview-content-outline">
+            <img id="preview-image-outline" alt="Preview">
+            <div class="preview-overlay" id="preview-overlay-outline"></div>
+          </div>
+        </div>
+        <canvas id="processingCanvas" hidden></canvas>
+        <div class="viewport-controls">
+          <button class="ctrl-btn" id="btn-reset-zoom-outline" title="Reset view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+          </button>
+          <button class="ctrl-btn" id="btn-toggle-img-outline" title="Toggle Image Visibility">
+            <svg id="eye-open-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg id="eye-closed-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+          <button class="ctrl-btn" id="btn-view-mode-outline" title="Cycle View Mode (Both / Image / Vector)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          </button>
+        </div>
+        <div class="hint-bar" id="hint-bar-outline" style="display:none;">ctrl+scroll = zoom · mid-drag = pan · ctrl+v = paste image</div>
+        <div class="processing-overlay" id="outline-processing"><div class="processing-spinner"></div></div>
+      </div>
+      
+      <div class="controls">
+        <div class="bg-selector">
+          <button class="btn-bg active" data-bg="auto" data-tool="outline">Auto</button>
+          <button class="btn-bg" data-bg="white" data-tool="outline">White</button>
+          <button class="btn-bg" data-bg="transparent" data-tool="outline">Transparent</button>
+          <label class="btn-bg color-pick" id="bg-color-label-outline">
+            <input type="color" id="bg-color-input-outline" value="#ffffff">
+            <span>Pick Color</span>
+          </label>
+        </div>
+        <div class="mode-switcher">
+          <button class="btn-mode" data-mode="line" data-tool="outline">Line Mode</button>
+          <button class="btn-mode active" data-mode="curve" data-tool="outline">Curve Mode</button>
+        </div>
+        <div class="control-group" id="outline-point-group">
+          <div class="control-label"><span>Point Count</span><span class="control-value" id="outline-point-value">100%</span></div>
+          <div class="slider-row">
+            <input type="range" id="outline-point-slider" class="slider-rtl" min="1" max="100" value="100" step="1">
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="control-label"><span>Diff Threshold (Curve Fit)</span><span class="control-value" id="outline-threshold-value">0.5%</span></div>
+          <div class="slider-row">
+            <input type="range" id="outline-threshold-slider" class="slider-rtl" min="0" max="30" value="0.5" step="0.1">
+            <button class="btn-mini" id="outline-auto-btn">Auto</button>
+          </div>
+        </div>
+        <div class="preset-row">
+          <button class="btn-preset" data-preset="quality_plus" data-tool="outline">Quality+</button>
+          <button class="btn-preset active" data-preset="quality" data-tool="outline">Quality</button>
+          <button class="btn-preset" data-preset="balanced" data-tool="outline">Balanced</button>
+          <button class="btn-preset" data-preset="simplicity" data-tool="outline">Simplicity</button>
+        </div>
+      </div>
+      <div class="preview-stats">
+        <div class="stat"><span class="stat-label">Original</span><span class="stat-value" id="outline-stat-original">— pts</span></div>
+        <div class="stat"><span class="stat-label">Current</span><span class="stat-value accent" id="outline-stat-current">— pts</span></div>
+        <div class="stat"><span class="stat-label">Reduction</span><span class="stat-value" id="outline-stat-reduction">— %</span></div>
+        <div class="stat"><span class="stat-label">Contours</span><span class="stat-value warn" id="outline-stat-contours">— </span></div>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -484,15 +643,14 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
         <p>Curve-Aware SVG Simplification</p>
       </div>
     </div>
-    <div class="toolbar">
+    <div class="header-right">
       <button class="btn" id="btn-sample">Load Sample</button>
       <label class="btn" style="position:relative;overflow:hidden;cursor:pointer;display:inline-flex;">
-        Upload SVG<input type="file" id="file-input-simplify" accept=".svg,image/svg+xml" style="position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0;">
+        Load SVG<input type="file" id="file-input-simplify" accept=".svg,image/svg+xml" style="position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0;">
       </label>
       <button class="btn primary" id="btn-export-simplify">Export</button>
     </div>
   </div>
-
   <div class="workspace">
     <section class="panel global" id="panel-global">
       <header class="panel-header">
@@ -501,14 +659,22 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
         <span class="panel-status" id="global-status">— pts</span>
       </header>
       <div class="viewport" id="viewport-global">
-        <svg id="svg-global" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet"></svg>
-        <button class="btn-reset-zoom visible" data-panel="global" title="Reset view">⤢</button>
+        <div class="drop-zone" id="drop-zone-simplify">
+          <span class="drop-zone-icon">📄</span>
+          <span class="drop-zone-text">Drop, Paste, or Click to browse</span>
+          <span class="drop-zone-hint">SVG files only</span>
+          <input type="file" id="file-input-simplify-hidden" accept=".svg,image/svg+xml" hidden>
+        </div>
+        <svg id="svg-global" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet" style="display:none;"></svg>
+        <button class="ctrl-btn" id="btn-reset-zoom-global" title="Reset view" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+        </button>
         <div class="processing-overlay" id="global-processing-simplify"><div class="processing-spinner"></div></div>
       </div>
       <div class="controls">
         <div class="mode-switcher">
-          <button class="btn-mode active" data-window="global" data-mode="line">Line Mode</button>
-          <button class="btn-mode" data-window="global" data-mode="curve">Curve Mode</button>
+          <button class="btn-mode" data-window="global" data-mode="line">Line Mode</button>
+          <button class="btn-mode active" data-window="global" data-mode="curve">Curve Mode</button>
         </div>
         <div class="control-group" id="global-point-group">
           <div class="control-label"><span>Point Count</span><span class="control-value" id="global-point-value">100%</span></div>
@@ -545,15 +711,17 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
         <span class="panel-status" id="partial-status">0 selected</span>
       </header>
       <div class="viewport" id="viewport-partial">
-        <svg id="svg-partial" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet"></svg>
-        <button class="btn-reset-zoom visible" data-panel="partial" title="Reset view">⤢</button>
-        <div class="hint-bar">drag = select · shift+click/drag = add · ctrl+click/drag = remove · ctrl+scroll = zoom · mid-drag = pan</div>
+        <svg id="svg-partial" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet" style="display:none;"></svg>
+        <button class="ctrl-btn" id="btn-reset-zoom-partial" title="Reset view" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+        </button>
+        <div class="hint-bar" id="hint-bar-partial" style="display:none;">drag = select · shift+click/drag = add · ctrl+click/drag = remove · ctrl+scroll = zoom · mid-drag = pan</div>
         <div class="processing-overlay" id="partial-processing-simplify"><div class="processing-spinner"></div></div>
       </div>
       <div class="controls">
         <div class="mode-switcher">
-          <button class="btn-mode active" data-window="partial" data-mode="line">Line Mode</button>
-          <button class="btn-mode" data-window="partial" data-mode="curve">Curve Mode</button>
+          <button class="btn-mode" data-window="partial" data-mode="line">Line Mode</button>
+          <button class="btn-mode active" data-window="partial" data-mode="curve">Curve Mode</button>
         </div>
         <div class="control-group" id="partial-point-group">
           <div class="control-label"><span>Point Count (Selection)</span><span class="control-value" id="partial-point-value">100%</span></div>
@@ -591,8 +759,10 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
         <span class="panel-status" id="preview-status">— % diff</span>
       </header>
       <div class="viewport" id="viewport-preview">
-        <svg id="svg-preview" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet"></svg>
-        <button class="btn-reset-zoom visible" data-panel="preview" title="Reset view">⤢</button>
+        <svg id="svg-preview" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet" style="display:none;"></svg>
+        <button class="ctrl-btn" id="btn-reset-zoom-preview" title="Reset view" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+        </button>
       </div>
       <div class="preview-stats preview-stats-3">
         <div class="stat"><span class="stat-label">Original</span><span class="stat-value" id="stat-original">— pts</span></div>
@@ -613,102 +783,247 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
   </div>
 </div>
 
-<!-- TRACER VIEW -->
-<div class="view-container" id="view-trace">
+<!-- IMAGE TRACER VIEW -->
+<div class="view-container" id="view-image">
   <div class="tool-header">
     <div class="tool-header-left">
       <div class="tool-header-icon">
         <svg viewBox="0 0 40 40">
-          <path d="M 20 5 A 15 15 0 0 0 20 35 L 20 5 Z" fill="#fbbf24" stroke="none"/>
-          <path d="M 20 5 A 15 15 0 0 1 20 35" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+          <rect x="6" y="6" width="28" height="28" rx="4" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+          <path d="M 12 20 Q 20 10, 28 20" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M 12 28 L 28 28" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
       </div>
       <div class="tool-header-title">
-        <h2>Vector Tracer</h2>
-        <p>Image to SVG Outline Engine</p>
+        <h2>Image Tracer</h2>
+        <p>Edge detection · skeletonization · curve fitting</p>
       </div>
     </div>
-    <div class="toolbar">
+    <div class="header-right">
       <label class="btn" style="position:relative;overflow:hidden;cursor:pointer;display:inline-flex;">
-        Upload Image<input type="file" id="file-input-trace" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0;">
+        Load Image<input type="file" id="file-input-image" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0;">
       </label>
-      <button class="btn primary" id="btn-export-trace" disabled>Export SVG</button>
+      <button class="btn primary" id="btn-export-image" disabled>Export SVG</button>
     </div>
   </div>
-
   <div class="workspace workspace-single">
-    <section class="panel global" id="panel-trace">
+    <section class="panel global" id="panel-image">
       <header class="panel-header">
         <span class="panel-num">01</span>
-        <div><h3>Image Tracer</h3><p>Marching squares · curve fitting</p></div>
-        <span class="panel-status" id="trace-status">No image</span>
+        <div><h3>Image Vectorizer</h3><p>Edge detection · skeletonization · curve fitting</p></div>
+        <span class="panel-status" id="image-status">No image</span>
       </header>
-      <div class="viewport" id="viewport-trace">
-        <div class="drop-zone" id="drop-zone-trace">
+      <div class="viewport" id="viewport-image">
+        <div class="drop-zone" id="drop-zone-image">
           <span class="drop-zone-icon">🖼️</span>
           <span class="drop-zone-text">Drop, Paste, or Click to browse</span>
           <span class="drop-zone-hint">PNG, JPG, WebP, GIF (Ctrl+V supported)</span>
         </div>
-        <div class="preview-wrapper" id="preview-wrapper-trace">
-          <img id="preview-image-trace" alt="Preview">
-          <div class="preview-overlay" id="preview-overlay-trace"></div>
+        <div class="preview-wrapper" id="preview-wrapper-image">
+          <div class="preview-content" id="preview-content-image">
+            <img id="preview-image-image" alt="Preview">
+            <div class="preview-overlay" id="preview-overlay-image"></div>
+          </div>
         </div>
-        <canvas id="processingCanvas" hidden></canvas>
-        <button class="btn-reset-zoom" id="btn-reset-zoom-trace" data-panel="trace" title="Reset view">⤢</button>
-        <div class="hint-bar" id="hint-bar-trace" style="display:none;">ctrl+scroll = zoom · mid-drag = pan · ctrl+v = paste image</div>
-        <div class="processing-overlay" id="trace-processing"><div class="processing-spinner"></div></div>
+        <canvas id="processingCanvasImage" hidden></canvas>
+        <div class="viewport-controls">
+          <button class="ctrl-btn" id="btn-reset-zoom-image" title="Reset view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+          </button>
+          <button class="ctrl-btn" id="btn-toggle-img-image" title="Toggle Image Visibility">
+            <svg id="eye-open-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg id="eye-closed-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+          <button class="ctrl-btn" id="btn-view-mode-image" title="Cycle View Mode (Both / Image / Vector)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          </button>
+        </div>
+        <div class="hint-bar" id="hint-bar-image" style="display:none;">ctrl+scroll = zoom · mid-drag = pan · ctrl+v = paste image</div>
+        <div class="processing-overlay" id="image-processing"><div class="processing-spinner"></div></div>
       </div>
       
       <div class="controls">
-        <div class="bg-selector">
-          <button class="btn-bg active" data-bg="auto">Auto</button>
-          <button class="btn-bg" data-bg="white">White</button>
-          <button class="btn-bg" data-bg="transparent">Transparent</button>
-          <label class="btn-bg color-pick" id="bg-color-label-trace">
-            <input type="color" id="bg-color-input-trace" value="#ffffff">
-            <span>Pick Color</span>
-          </label>
+        <div class="toggle-row">
+          <label for="colorful-toggle">Colorful Tracing (Fill Regions)</label>
+          <label class="toggle"><input type="checkbox" id="colorful-toggle"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
         </div>
-
+        <div class="toggle-row">
+          <label for="target-color-toggle">Target Line Color (Blueprint Mode)</label>
+          <label class="toggle"><input type="checkbox" id="target-color-toggle"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+        </div>
+        <div class="target-color-row disabled" id="target-color-row">
+          <label for="bg-color-input-image">Pick Target Color</label>
+          <input type="color" id="bg-color-input-image" value="#22d3ee">
+        </div>
+        <div class="control-group" id="target-tolerance-group" style="display:none;">
+          <div class="control-label"><span>Target Tolerance</span><span class="control-value" id="target-tolerance-value">15%</span></div>
+          <div class="slider-row">
+            <input type="range" id="target-tolerance-slider" min="1" max="100" value="15" step="1">
+          </div>
+        </div>
+        <div class="control-group" id="color-threshold-group">
+          <div class="control-label"><span>Color Difference Threshold</span><span class="control-value" id="color-threshold-value">5%</span></div>
+          <div class="slider-row">
+            <input type="range" id="color-threshold-slider" min="1" max="100" value="5" step="1">
+          </div>
+        </div>
+        <div class="control-group" id="line-width-group">
+          <div class="control-label"><span>Line Width (Connect Gaps)</span><span class="control-value" id="line-width-value">1 px</span></div>
+          <div class="slider-row">
+            <input type="range" id="line-width-slider" min="0" max="10" value="1" step="1">
+          </div>
+        </div>
         <div class="mode-switcher">
-          <button class="btn-mode active" data-mode="line">Line Mode</button>
-          <button class="btn-mode" data-mode="curve">Curve Mode</button>
+          <button class="btn-mode" data-mode="line" data-tool="image">Line Mode</button>
+          <button class="btn-mode active" data-mode="curve" data-tool="image">Curve Mode</button>
         </div>
-
-        <div class="control-group" id="trace-point-group">
-          <div class="control-label"><span>Point Count</span><span class="control-value" id="trace-point-value">100%</span></div>
+        <div class="control-group" id="image-point-group">
+          <div class="control-label"><span>Point Count</span><span class="control-value" id="image-point-value">100%</span></div>
           <div class="slider-row">
-            <input type="range" id="trace-point-slider" class="slider-rtl" min="1" max="100" value="100" step="1">
+            <input type="range" id="image-point-slider" class="slider-rtl" min="1" max="100" value="100" step="1">
           </div>
         </div>
-
         <div class="control-group">
-          <div class="control-label"><span>Diff Threshold</span><span class="control-value" id="trace-threshold-value">0.5%</span></div>
+          <div class="control-label"><span>Diff Threshold (Curve Fit)</span><span class="control-value" id="image-threshold-value">0.5%</span></div>
           <div class="slider-row">
-            <input type="range" id="trace-threshold-slider" class="slider-rtl" min="0" max="30" value="0.5" step="0.1">
-            <button class="btn-mini" id="trace-auto-btn">Auto</button>
+            <input type="range" id="image-threshold-slider" class="slider-rtl" min="0" max="30" value="0.5" step="0.1">
+            <button class="btn-mini" id="image-auto-btn">Auto</button>
           </div>
         </div>
-
         <div class="preset-row">
-          <button class="btn-preset" data-preset="quality_plus">Quality+</button>
-          <button class="btn-preset active" data-preset="quality">Quality</button>
-          <button class="btn-preset" data-preset="balanced">Balanced</button>
-          <button class="btn-preset" data-preset="simplicity">Simplicity</button>
+          <button class="btn-preset" data-preset="quality_plus" data-tool="image">Quality+</button>
+          <button class="btn-preset active" data-preset="quality" data-tool="image">Quality</button>
+          <button class="btn-preset" data-preset="balanced" data-tool="image">Balanced</button>
+          <button class="btn-preset" data-preset="simplicity" data-tool="image">Simplicity</button>
         </div>
       </div>
-
       <div class="preview-stats">
-        <div class="stat"><span class="stat-label">Original</span><span class="stat-value" id="trace-stat-original">— pts</span></div>
-        <div class="stat"><span class="stat-label">Current</span><span class="stat-value accent" id="trace-stat-current">— pts</span></div>
-        <div class="stat"><span class="stat-label">Reduction</span><span class="stat-value" id="trace-stat-reduction">— %</span></div>
-        <div class="stat"><span class="stat-label">Contours</span><span class="stat-value warn" id="trace-stat-contours">— </span></div>
+        <div class="stat"><span class="stat-label">Original</span><span class="stat-value" id="image-stat-original">— pts</span></div>
+        <div class="stat"><span class="stat-label">Current</span><span class="stat-value accent" id="image-stat-current">— pts</span></div>
+        <div class="stat"><span class="stat-label">Reduction</span><span class="stat-value" id="image-stat-reduction">— %</span></div>
+        <div class="stat"><span class="stat-label">Contours</span><span class="stat-value warn" id="image-stat-contours">— </span></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- PDF EXTRACTOR VIEW -->
+<div class="view-container" id="view-pdf">
+  <div class="tool-header">
+    <div class="tool-header-left">
+      <div class="tool-header-icon">
+        <svg viewBox="0 0 40 40">
+          <path d="M 10 5 H 25 L 30 10 V 35 H 10 Z" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M 15 20 H 25 M 15 25 H 20" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="tool-header-title">
+        <h2>PDF Vector Extractor</h2>
+        <p>Native path extraction · curve fitting</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <label class="btn" style="position:relative;overflow:hidden;cursor:pointer;display:inline-flex;">
+        Load PDF<input type="file" id="file-input-pdf" accept="application/pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0;">
+      </label>
+      <button class="btn primary" id="btn-export-pdf" disabled>Export SVG</button>
+    </div>
+  </div>
+  <div class="workspace workspace-single">
+    <section class="panel global" id="panel-pdf">
+      <header class="panel-header">
+        <span class="panel-num">01</span>
+        <div><h3>PDF Vector Extractor</h3><p>Native path extraction · curve fitting</p></div>
+        <span class="panel-status" id="pdf-status">No PDF</span>
+      </header>
+      <div class="viewport" id="viewport-pdf">
+        <div class="drop-zone" id="drop-zone-pdf">
+          <span class="drop-zone-icon">📄</span>
+          <span class="drop-zone-text">Drop PDF here or click to browse</span>
+          <span class="drop-zone-hint">Extracts native vector lines and curves</span>
+        </div>
+        <div class="preview-wrapper" id="preview-wrapper-pdf">
+          <div class="preview-content" id="preview-content-pdf">
+            <img id="preview-image-pdf" alt="Preview">
+            <div class="preview-overlay" id="preview-overlay-pdf"></div>
+          </div>
+        </div>
+        <canvas id="processingCanvasPdf" hidden></canvas>
+        <div class="viewport-controls">
+          <button class="ctrl-btn" id="btn-reset-zoom-pdf" title="Reset view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+          </button>
+          <button class="ctrl-btn" id="btn-toggle-img-pdf" title="Toggle Image Visibility">
+            <svg id="eye-open-pdf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg id="eye-closed-pdf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+          <button class="ctrl-btn" id="btn-view-mode-pdf" title="Cycle View Mode (Both / Image / Vector)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          </button>
+          <button class="ctrl-btn" id="btn-delete-mode" title="Toggle Delete Mode (Click vectors to delete)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        </div>
+        <div class="hint-bar" id="hint-bar-pdf" style="display:none;">ctrl+scroll = zoom · mid-drag = pan · delete mode = click to remove paths</div>
+        <div class="processing-overlay" id="pdf-processing"><div class="processing-spinner"></div></div>
+      </div>
+      
+      <div class="controls">
+        <div class="page-controls">
+          <button id="btn-prev-page" disabled>← Prev Page</button>
+          <button id="btn-next-page" disabled>Next Page →</button>
+          <span id="page-info">Page 0 / 0</span>
+          <button id="btn-calc-pdf" class="btn-mini" style="margin-left: auto;" disabled>Calculate</button>
+        </div>
+        <div class="toggle-row">
+          <label for="simplify-toggle">Simplify Vectors (Curve Fit)</label>
+          <label class="toggle"><input type="checkbox" id="simplify-toggle"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+        </div>
+        <div class="toggle-row">
+          <label for="color-toggle">Extract Color Data</label>
+          <label class="toggle"><input type="checkbox" id="color-toggle" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+        </div>
+        <div class="mode-switcher">
+          <button class="btn-mode" data-mode="line" data-tool="pdf">Line Mode</button>
+          <button class="btn-mode active" data-mode="curve" data-tool="pdf">Curve Mode</button>
+        </div>
+        <div class="control-group" id="pdf-sample-group">
+          <div class="control-label"><span>Sample Resolution (Pts/Path)</span><span class="control-value" id="pdf-sample-value">400</span></div>
+          <div class="slider-row">
+            <input type="range" id="pdf-sample-slider" min="50" max="5000" value="400" step="50">
+          </div>
+        </div>
+        <div class="control-group" id="pdf-point-group">
+          <div class="control-label"><span>Point Count</span><span class="control-value" id="pdf-point-value">100%</span></div>
+          <div class="slider-row">
+            <input type="range" id="pdf-point-slider" class="slider-rtl" min="1" max="100" value="100" step="1">
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="control-label"><span>Diff Threshold (Curve Fit)</span><span class="control-value" id="pdf-threshold-value">0.1%</span></div>
+          <div class="slider-row">
+            <input type="range" id="pdf-threshold-slider" class="slider-rtl" min="0" max="30" value="0.1" step="0.1">
+            <button class="btn-mini" id="pdf-auto-btn">Auto</button>
+          </div>
+        </div>
+        <div class="preset-row">
+          <button class="btn-preset" data-preset="quality_plus" data-tool="pdf">Quality+</button>
+          <button class="btn-preset active" data-preset="quality" data-tool="pdf">Quality</button>
+          <button class="btn-preset" data-preset="balanced" data-tool="pdf">Balanced</button>
+          <button class="btn-preset" data-preset="simplicity" data-tool="pdf">Simplicity</button>
+        </div>
+      </div>
+      <div class="preview-stats">
+        <div class="stat"><span class="stat-label">Original</span><span class="stat-value" id="pdf-stat-original">— pts</span></div>
+        <div class="stat"><span class="stat-label">Current</span><span class="stat-value accent" id="pdf-stat-current">— pts</span></div>
+        <div class="stat"><span class="stat-label">Reduction</span><span class="stat-value" id="pdf-stat-reduction">— %</span></div>
+        <div class="stat"><span class="stat-label">Paths</span><span class="stat-value warn" id="pdf-stat-paths">— </span></div>
       </div>
       <div class="curve-legend">
-        <div class="curve-legend-item"><span class="curve-legend-swatch" style="background:var(--curve-l)"></span><span id="trace-count-L">L 0</span></div>
-        <div class="curve-legend-item"><span class="curve-legend-swatch" style="background:var(--curve-q)"></span><span id="trace-count-Q">Q 0</span></div>
-        <div class="curve-legend-item"><span class="curve-legend-swatch" style="background:var(--curve-c)"></span><span id="trace-count-C">C 0</span></div>
-        <div class="curve-legend-item"><span class="curve-legend-swatch" style="background:var(--curve-a)"></span><span id="trace-count-A">A 0</span></div>
+        <div class="curve-legend-item"><span class="curve-legend-swatch" style="background:var(--curve-l)"></span><span id="pdf-count-L">L 0</span></div>
+        <div class="curve-legend-item"><span class="curve-legend-swatch" style="background:var(--curve-q)"></span><span id="pdf-count-Q">Q 0</span></div>
+        <div class="curve-legend-item"><span class="curve-legend-swatch" style="background:var(--curve-c)"></span><span id="pdf-count-C">C 0</span></div>
+        <div class="curve-legend-item"><span class="curve-legend-swatch" style="background:var(--curve-a)"></span><span id="pdf-count-A">A 0</span></div>
       </div>
     </section>
   </div>
@@ -718,20 +1033,19 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 
 <script>
 // ============================================================
-// GLOBAL ROUTING & UI
+// GLOBAL UI & SHARED UTILS
 // ============================================================
 function showView(viewId) {
   document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
   document.getElementById(viewId).classList.add('active');
   const isDashboard = viewId === 'view-dashboard';
   document.getElementById('btn-back').style.display = isDashboard ? 'none' : 'inline-flex';
-  document.getElementById('brand-subtitle').textContent = isDashboard ? 'SVG Processing Suite' : (viewId === 'view-simplify' ? 'Vector Simplifier' : 'Vector Tracer');
+  document.getElementById('brand-subtitle').textContent = isDashboard ? 'SVG Processing Suite' : viewId.replace('view-', '').replace(/^\w/, c => c.toUpperCase()).replace('-', ' ');
 }
 
 document.getElementById('main-brand').addEventListener('click', () => showView('view-dashboard'));
 document.getElementById('btn-back').addEventListener('click', () => showView('view-dashboard'));
-document.getElementById('card-simplify').addEventListener('click', () => showView('view-simplify'));
-document.getElementById('card-trace').addEventListener('click', () => showView('view-trace'));
+document.querySelectorAll('.tool-card').forEach(card => card.addEventListener('click', () => showView(card.dataset.tool)));
 
 function toast(msg, type = 'info') {
   const c = document.getElementById('global-toasts');
@@ -740,17 +1054,129 @@ function toast(msg, type = 'info') {
   c.appendChild(el); setTimeout(() => el.remove(), 3000);
 }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// Helper for reduction color (Green = good, Red = bad)
 function getReductionClass(reduction) {
   if (reduction > 50) return 'stat-value success';
   if (reduction > 10) return 'stat-value accent';
   return 'stat-value warn';
 }
+function getPresetValue(mode, preset) {
+  if (mode === 'curve') {
+    if (preset === 'quality_plus') return 0;
+    if (preset === 'quality') return 0.1;
+    if (preset === 'balanced') return 0.2;
+    if (preset === 'simplicity') return 0.5;
+  } else {
+    if (preset === 'quality_plus') return 0.1;
+    if (preset === 'quality') return 0.5;
+    if (preset === 'balanced') return 1.5;
+    if (preset === 'simplicity') return 5;
+  }
+  return 1.5;
+}
+function makeEditable(elementId, opts) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const { getValue, setValue, min, max, format } = opts;
+    el.style.cursor = 'pointer'; el.title = 'Click to edit';
+    let editing = false;
+    el.addEventListener('click', () => {
+        if (editing) return;
+        editing = true;
+        const input = document.createElement('input');
+        input.type = 'number'; input.value = getValue(); input.step = 'any';
+        input.style.cssText = 'width:100%;font-size:11px;font-family:JetBrains Mono,monospace;background:transparent;border:none;color:inherit;text-align:center;outline:none;padding:2px 4px;';
+        el.classList.add('editing'); el.textContent = ''; el.appendChild(input);
+        input.focus(); input.select();
+        let done = false;
+        const finish = (apply) => {
+            if (done) return; done = true;
+            if (apply) {
+                const v = parseFloat(input.value);
+                if (!isNaN(v)) {
+                    let valToSet = v;
+                    if (max !== undefined && valToSet > max) valToSet = max;
+                    if (min !== undefined && valToSet < min) valToSet = min;
+                    setValue(valToSet);
+                }
+            }
+            editing = false; el.classList.remove('editing'); el.textContent = format(getValue());
+        };
+        input.addEventListener('blur', () => finish(true));
+        input.addEventListener('keydown', (e) => {
+            e.stopPropagation();
+            if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+            if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+        });
+    });
+}
 
-// ============================================================
-// SHARED GEOMETRY UTILITIES
-// ============================================================
+// Viewport Manager (Smooth zoom, No pan inertia)
+class ViewportManager {
+    constructor(container, content, resetBtn) {
+        this.container = container;
+        this.content = content;
+        this.resetBtn = resetBtn;
+        this.zoom = { scale: 1, x: 0, y: 0 };
+        this.panState = null;
+        this.init();
+    }
+    applyTransform() {
+        this.content.style.transform = `translate(${this.zoom.x}px, ${this.zoom.y}px) scale(${this.zoom.scale})`;
+    }
+    reset() {
+        this.zoom = { scale: 1, x: 0, y: 0 };
+        this.applyTransform();
+    }
+    init() {
+        this.container.addEventListener('wheel', (e) => {
+            if (!e.ctrlKey) return; 
+            e.preventDefault();
+            this.content.classList.remove('panning');
+            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+            const rect = this.container.getBoundingClientRect();
+            const cx = rect.width / 2, cy = rect.height / 2;
+            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            const dx = mx - cx, dy = my - cy;
+            const newScale = Math.max(0.1, Math.min(10, this.zoom.scale * factor));
+            this.zoom.x = dx - ((dx - this.zoom.x) / this.zoom.scale) * newScale;
+            this.zoom.y = dy - ((dy - this.zoom.y) / this.zoom.scale) * newScale;
+            this.zoom.scale = newScale;
+            this.applyTransform();
+        }, { passive: false });
+        
+        this.container.addEventListener('mousedown', (e) => {
+            if (e.button === 1) { 
+                e.preventDefault(); 
+                this.content.classList.add('panning');
+                this.panState = { startX: e.clientX, startY: e.clientY, ox: this.zoom.x, oy: this.zoom.y }; 
+            }
+        });
+        this.container.addEventListener('mousemove', (e) => {
+            if (!this.panState) return; 
+            this.zoom.x = this.panState.ox + (e.clientX - this.panState.startX);
+            this.zoom.y = this.panState.oy + (e.clientY - this.panState.startY);
+            this.applyTransform();
+        });
+        const endPan = (e) => { 
+            if (e.button === 1 && this.panState) {
+                this.panState = null; 
+                this.content.classList.remove('panning');
+            }
+        };
+        this.container.addEventListener('mouseup', endPan);
+        this.container.addEventListener('mouseleave', () => { 
+            if (this.panState) {
+                this.panState = null; 
+                this.content.classList.remove('panning');
+            }
+        });
+        if (this.resetBtn) {
+            this.resetBtn.addEventListener('click', () => this.reset());
+        }
+    }
+}
+
+// Shared Geometry & Curve Fitting
 function getBBox(points) {
   if (!points.length) return { x: 0, y: 0, w: 500, h: 500 };
   let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
@@ -763,16 +1189,6 @@ function pointLineDist(p, a, b) {
   if (len < 1e-10) return Math.hypot(p.x-a.x, p.y-a.y);
   return Math.abs(dy*p.x - dx*p.y + b.x*a.y - b.y*a.x) / len;
 }
-function fitCircle(p0, p1, p2) {
-  const d = 2*(p0.x*(p1.y-p2.y) + p1.x*(p2.y-p0.y) + p2.x*(p0.y-p1.y));
-  if (Math.abs(d) < 1e-10) return null;
-  const p0Sq=p0.x*p0.x+p0.y*p0.y, p1Sq=p1.x*p1.x+p1.y*p1.y, p2Sq=p2.x*p2.x+p2.y*p2.y;
-  const cx = (p0Sq*(p1.y-p2.y) + p1Sq*(p2.y-p0.y) + p2Sq*(p0.y-p1.y)) / d;
-  const cy = (p0Sq*(p2.x-p1.x) + p1Sq*(p0.x-p2.x) + p2Sq*(p1.x-p0.x)) / d;
-  const r = Math.hypot(cx-p0.x, cy-p0.y);
-  if (!isFinite(r) || r > 2000 || r < 0.1) return null;
-  return { cx, cy, r };
-}
 function getChordLengths(p0, interior, p1) {
   let lengths = [0]; let prev = p0;
   for (let i = 0; i < interior.length; i++) {
@@ -784,11 +1200,8 @@ function getChordLengths(p0, interior, p1) {
   if (total === 0) return null;
   return lengths.map(l => l / total);
 }
-function triangleArea(a, b, c) {
-  return Math.abs((b.x-a.x)*(c.y-a.y) - (c.x-a.x)*(b.y-a.y)) / 2;
-}
+function triangleArea(a, b, c) { return Math.abs((b.x-a.x)*(c.y-a.y) - (c.x-a.x)*(b.y-a.y)) / 2; }
 
-// VISVALINGAM-WHYATT
 function getVWOrder(points, closed) {
   const n = points.length;
   if (n < 3) return points.map((_, i) => i);
@@ -798,23 +1211,18 @@ function getVWOrder(points, closed) {
     next: closed ? (i + 1) % n : Math.min(n - 1, i + 1)
   }));
   if (!closed) { nodes[0].area = Infinity; nodes[n - 1].area = Infinity; }
-  for (let i = closed ? 0 : 1; i < (closed ? n : n - 1); i++) {
-    nodes[i].area = triangleArea(nodes[nodes[i].prev], nodes[i], nodes[nodes[i].next]);
-  }
+  for (let i = closed ? 0 : 1; i < (closed ? n : n - 1); i++) nodes[i].area = triangleArea(nodes[nodes[i].prev], nodes[i], nodes[nodes[i].next]);
   const removalOrder = []; let count = n; const limit = closed ? 3 : 2;
   while (count > limit) {
     let minArea = Infinity, minIdx = -1;
-    for (let i = 0; i < n; i++) {
-      if (!nodes[i].removed && nodes[i].area < minArea) { minArea = nodes[i].area; minIdx = i; }
-    }
+    for (let i = 0; i < n; i++) if (!nodes[i].removed && nodes[i].area < minArea) { minArea = nodes[i].area; minIdx = i; }
     if (minIdx === -1) break;
     nodes[minIdx].removed = true; removalOrder.push(minIdx); count--;
     const pi = nodes[minIdx].prev, ni = nodes[minIdx].next;
     if (pi !== -1) { nodes[pi].next = ni; if (nodes[pi].area !== Infinity) nodes[pi].area = triangleArea(nodes[nodes[pi].prev], nodes[pi], nodes[ni]); }
     if (ni !== -1) { nodes[ni].prev = pi; if (nodes[ni].area !== Infinity) nodes[ni].area = triangleArea(nodes[pi], nodes[ni], nodes[nodes[ni].next]); }
   }
-  const kept = [];
-  for (let i = 0; i < n; i++) if (!nodes[i].removed) kept.push(i);
+  const kept = []; for (let i = 0; i < n; i++) if (!nodes[i].removed) kept.push(i);
   return kept.concat(removalOrder.reverse());
 }
 function simplifyCurveToCountIndices(indices, original, targetCount, closed) {
@@ -826,30 +1234,30 @@ function simplifyCurveToCountIndices(indices, original, targetCount, closed) {
   return selected.map(i => indices[i]);
 }
 
-// CURVE FITTING
 function tryFitLine(p0, interior, p1) {
-  let err = 0;
-  for (const p of interior) { const d = pointLineDist(p, p0, p1); if (d > err) err = d; }
+  let err = 0; for (const p of interior) { const d = pointLineDist(p, p0, p1); if (d > err) err = d; }
   return { seg: { type:'L', params:[p1.x, p1.y] }, err };
 }
 function tryFitArc(p0, interior, p1) {
   if (interior.length < 1) return null;
   let midPoint = interior[0], maxDist = 0;
   for (const p of interior) { const d = pointLineDist(p, p0, p1); if (d > maxDist) { maxDist = d; midPoint = p; } }
-  const circle = fitCircle(p0, midPoint, p1);
-  if (!circle) return null;
-  let arcErr = 0;
-  for (const p of interior) { arcErr = Math.max(arcErr, Math.abs(Math.hypot(p.x - circle.cx, p.y - circle.cy) - circle.r)); }
-  const a0 = Math.atan2(p0.y - circle.cy, p0.x - circle.cx);
-  const a1 = Math.atan2(p1.y - circle.cy, p1.x - circle.cx);
-  const aMid = Math.atan2(midPoint.y - circle.cy, midPoint.x - circle.cx);
+  const d = 2*(p0.x*(interior[0].y-p1.y) + interior[0].x*(p1.y-p0.y) + p1.x*(p0.y-interior[0].y));
+  if (Math.abs(d) < 1e-10) return null;
+  const p0Sq=p0.x*p0.x+p0.y*p0.y, p1Sq=p1.x*p1.x+p1.y*p1.y, p2Sq=interior[0].x*interior[0].x+interior[0].y*interior[0].y;
+  const cx = (p0Sq*(interior[0].y-p1.y) + p1Sq*(p1.y-p0.y) + p2Sq*(p0.y-interior[0].y)) / d;
+  const cy = (p0Sq*(p1.x-interior[0].x) + p1Sq*(p0.x-p1.x) + p2Sq*(interior[0].x-p0.x)) / d;
+  const r = Math.hypot(cx-p0.x, cy-p0.y);
+  if (!isFinite(r) || r > 2000 || r < 0.1) return null;
+  let arcErr = 0; for (const p of interior) arcErr = Math.max(arcErr, Math.abs(Math.hypot(p.x - cx, p.y - cy) - r));
+  const a0 = Math.atan2(p0.y - cy, p0.x - cx), a1 = Math.atan2(p1.y - cy, p1.x - cx), aMid = Math.atan2(midPoint.y - cy, midPoint.x - cx);
   const cwSpan = ((a1 - a0) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
   const midFromA0 = ((aMid - a0) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
   const midOnCw = midFromA0 < cwSpan && cwSpan > 0.001;
   let sweepFlag, largeArcFlag;
   if (midOnCw) { sweepFlag = 1; largeArcFlag = cwSpan > Math.PI ? 1 : 0; }
   else { sweepFlag = 0; largeArcFlag = (2*Math.PI - cwSpan) > Math.PI ? 1 : 0; }
-  return { seg: { type:'A', params:[circle.r, circle.r, 0, largeArcFlag, sweepFlag, p1.x, p1.y], center: { x: circle.cx, y: circle.cy }, r: circle.r }, err: arcErr };
+  return { seg: { type:'A', params:[r, r, 0, largeArcFlag, sweepFlag, p1.x, p1.y], center: { x: cx, y: cy }, r }, err: arcErr };
 }
 function fitQuadraticLS(p0, interior, p1, ts) {
   let sumA = 0, sumBx = 0, sumBy = 0;
@@ -865,13 +1273,11 @@ function fitCubicLS(p0, interior, p1, ts) {
   for (let i = 0; i < interior.length; i++) {
     const t = ts[i + 1], u = 1 - t; const A = 3 * u * u * t, B = 3 * u * t * t;
     const bx = interior[i].x - u*u*u*p0.x - t*t*t*p1.x; const by = interior[i].y - u*u*u*p0.y - t*t*t*p1.y;
-    sumA2 += A*A; sumAB += A*B; sumB2 += B*B;
-    sumAbx += A*bx; sumAby += A*by; sumBbx += B*bx; sumBby += B*by;
+    sumA2 += A*A; sumAB += A*B; sumB2 += B*B; sumAbx += A*bx; sumAby += A*by; sumBbx += B*bx; sumBby += B*by;
   }
-  const det = sumA2 * sumB2 - sumAB * sumAB;
-  if (Math.abs(det) < 1e-10) return null;
-  const c1x = (sumB2 * sumAbx - sumAB * sumBbx) / det; const c1y = (sumB2 * sumAby - sumAB * sumBby) / det;
-  const c2x = (sumA2 * sumBbx - sumAB * sumAbx) / det; const c2y = (sumA2 * sumBby - sumAB * sumAby) / det;
+  const det = sumA2 * sumB2 - sumAB * sumAB; if (Math.abs(det) < 1e-10) return null;
+  const c1x = (sumB2 * sumAbx - sumAB * sumBbx) / det, c1y = (sumB2 * sumAby - sumAB * sumBby) / det;
+  const c2x = (sumA2 * sumBbx - sumAB * sumAbx) / det, c2y = (sumA2 * sumBby - sumAB * sumAby) / det;
   return { c1: {x: c1x, y: c1y}, c2: {x: c2x, y: c2y} };
 }
 function maxBezierError(p0, cp, p1, interior, degree) {
@@ -951,7 +1357,7 @@ function formatSeg(seg) {
   return '';
 }
 function fitCurvesForRenderingIndices(indices, original, closed, straightLinesOnly = false) {
-  if (indices.length < 2) return { path: '', segments: [], counts: {L:0,Q:0,C:0,A:0}, startPoint: original[indices[0]] || {x:0,y:0} };
+  if (indices.length < 2) return { path: '', segments: [], counts: {L:0,Q:0,C:0,A:0} };
   const points = indices.map(i => original[i]);
   const n = points.length, segments = [], numSegs = closed ? n : n - 1, counts = { L:0, Q:0, C:0, A:0 };
   for (let i = 0; i < numSegs; i++) {
@@ -969,71 +1375,442 @@ function fitCurvesForRenderingIndices(indices, original, closed, straightLinesOn
   let d = `M ${points[0].x.toFixed(3)} ${points[0].y.toFixed(3)}`;
   for (const seg of segments) d += ` ${formatSeg(seg)}`;
   if (closed) d += ' Z';
-  return { path: d, segments, counts, startPoint: points[0] };
-}
-function getPresetValue(mode, preset) {
-  if (mode === 'curve') {
-    if (preset === 'quality_plus') return 0;
-    if (preset === 'quality') return 0.1;
-    if (preset === 'balanced') return 0.2;
-    if (preset === 'simplicity') return 0.5;
-  } else {
-    if (preset === 'quality_plus') return 0.1;
-    if (preset === 'quality') return 0.5;
-    if (preset === 'balanced') return 1.5;
-    if (preset === 'simplicity') return 5;
-  }
-  return 1.5;
-}
-
-// CURVE SAMPLING & DIFF
-function sampleSegment(p0, seg, n) {
-  const pts = []; const p = seg.params;
-  for (let i = 1; i <= n; i++) {
-    const t = i / n, u = 1 - t; let x, y;
-    switch (seg.type) {
-      case 'L': x = p0.x + t*(p[0]-p0.x); y = p0.y + t*(p[1]-p0.y); break;
-      case 'Q': x = u*u*p0.x + 2*u*t*p[0] + t*t*p[2]; y = u*u*p0.y + 2*u*t*p[1] + t*t*p[3]; break;
-      case 'C': x = u*u*u*p0.x + 3*u*u*t*p[0] + 3*u*t*t*p[2] + t*t*t*p[4]; y = u*u*u*p0.y + 3*u*u*t*p[1] + 3*u*t*t*p[3] + t*t*t*p[5]; break;
-      case 'A': {
-        if (seg.center) {
-          const a0 = Math.atan2(p0.y - seg.center.y, p0.x - seg.center.x);
-          const a1 = Math.atan2(p[5] - seg.center.y, p[6] - seg.center.x);
-          let span = a1 - a0;
-          if (p[4] === 1) { if (span < 0) span += 2*Math.PI; } else { if (span > 0) span -= 2*Math.PI; }
-          const a = a0 + span * t; x = seg.center.x + seg.r * Math.cos(a); y = seg.center.y + seg.r * Math.sin(a);
-        } else { x = p0.x + t * (p[5] - p0.x); y = p0.y + t * (p[6] - p0.y); }
-        break;
-      }
-    }
-    pts.push({ x, y });
-  }
-  return pts;
-}
-function curvePathToPoints(segments, startPoint, samplesPerSeg = 12) {
-  const pts = [{ ...startPoint }]; let current = { ...startPoint };
-  for (const seg of segments) {
-    pts.push(...sampleSegment(current, seg, samplesPerSeg));
-    current = { x: seg.params[seg.params.length - 2], y: seg.params[seg.params.length - 1] };
-  }
-  return pts;
-}
-function computeCurveDifference(original, curveResult, closed) {
-  if (!curveResult.segments.length) return 0;
-  const curvePts = curvePathToPoints(curveResult.segments, curveResult.startPoint, 16);
-  const bbox = getBBox(original); const diag = Math.hypot(bbox.w, bbox.h);
-  if (diag === 0) return 0;
-  let totalDist = 0;
-  for (const p of original) {
-    let minD = Infinity;
-    for (const c of curvePts) { const d = Math.hypot(p.x - c.x, p.y - c.y); if (d < minD) minD = d; }
-    totalDist += minD;
-  }
-  return (totalDist / original.length / diag) * 100;
+  return { path: d, segments, counts };
 }
 
 // ============================================================
-// 1. VECTOR SIMPLIFIER LOGIC
+// TOOL 1: OUTLINE TRACER
+// ============================================================
+const OutlineTracer = {
+  State: {
+    originalContours: [], closed: [],
+    viewBox: { x: 0, y: 0, w: 500, h: 500 },
+    threshold: 0.5, pointPct: 100,
+    mode: 'curve', preset: 'quality',
+    bgMode: 'auto', bgColor: { r: 255, g: 255, b: 255 },
+    isProcessing: false,
+    imgVisible: true,
+    viewMode: 'both'
+  },
+  originalImage: null,
+  MAX_PROCESSING_DIM: 1400,
+  SVG_NS: 'http://www.w3.org/2000/svg',
+  
+  getTolFromThreshold(threshold) {
+    const diag = Math.hypot(this.State.viewBox.w, this.State.viewBox.h);
+    return (threshold / 100) * diag;
+  },
+  detectBgColor(pixels, w, h) {
+    const samples = []; const step = Math.max(1, Math.floor(w / 50));
+    for (let x = 0; x < w; x += step) { samples.push([x, 0]); samples.push([x, h - 1]); }
+    for (let y = 0; y < h; y += step) { samples.push([0, y]); samples.push([w - 1, y]); }
+    let rSum = 0, gSum = 0, bSum = 0, count = 0;
+    for (const [x, y] of samples) {
+      const idx = (y * w + x) * 4;
+      rSum += pixels[idx]; gSum += pixels[idx + 1]; bSum += pixels[idx + 2]; count++;
+    }
+    return { r: Math.round(rSum / count), g: Math.round(gSum / count), b: Math.round(bSum / count) };
+  },
+  async processImage(img) {
+    if (this.State.isProcessing) return;
+    this.State.isProcessing = true;
+    document.getElementById('outline-processing').classList.add('active');
+    document.getElementById('outline-status').textContent = 'Processing...';
+    await sleep(50);
+    try {
+      const origW = img.naturalWidth, origH = img.naturalHeight;
+      let procW, procH; const maxDim = Math.max(origW, origH);
+      if (maxDim <= this.MAX_PROCESSING_DIM) { procW = origW; procH = origH; }
+      else { const scale = this.MAX_PROCESSING_DIM / maxDim; procW = Math.round(origW * scale); procH = Math.round(origH * scale); }
+
+      const canvas = document.getElementById('processingCanvas');
+      canvas.width = procW; canvas.height = procH;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.clearRect(0, 0, procW, procH); ctx.drawImage(img, 0, 0, procW, procH);
+      const imageData = ctx.getImageData(0, 0, procW, procH);
+      const pixels = imageData.data;
+
+      if (this.State.bgMode === 'auto') {
+        this.State.bgColor = this.detectBgColor(pixels, procW, procH);
+        const hex = '#' + [this.State.bgColor.r, this.State.bgColor.g, this.State.bgColor.b].map(c => c.toString(16).padStart(2, '0')).join('');
+        document.getElementById('bg-color-input-outline').value = hex;
+      }
+
+      const gw = procW + 1, gh = procH + 1, grid = new Float32Array(gw * gh);
+      let threshold = 0.5;
+      for (let gy = 0; gy < gh; gy++) {
+        for (let gx = 0; gx < gw; gx++) {
+          const px = Math.min(gx, procW - 1), py = Math.min(gy, procH - 1);
+          const idx = (py * procW + px) * 4;
+          const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2], a = pixels[idx + 3];
+          let bgValue;
+          if (this.State.bgMode === 'transparent') { bgValue = 1.0 - (a / 255); }
+          else if (this.State.bgMode === 'white') { bgValue = Math.max(r, g, b) / 255; threshold = 0.94; }
+          else {
+            const dist = Math.sqrt(Math.pow(r - this.State.bgColor.r, 2) + Math.pow(g - this.State.bgColor.g, 2) + Math.pow(b - this.State.bgColor.b, 2));
+            bgValue = 1.0 - Math.min(1, dist / 60.0); threshold = 0.5;
+          }
+          grid[gy * gw + gx] = bgValue;
+        }
+      }
+
+      const allSegments = [];
+      for (let cy = 0; cy < procH; cy++) {
+        for (let cx = 0; cx < procW; cx++) {
+          const vTL = grid[cy * gw + cx], vTR = grid[cy * gw + (cx + 1)];
+          const vBR = grid[(cy + 1) * gw + (cx + 1)], vBL = grid[(cy + 1) * gw + cx];
+          const bTL = vTL > threshold ? 1 : 0, bTR = vTR > threshold ? 1 : 0;
+          const bBR = vBR > threshold ? 1 : 0, bBL = vBL > threshold ? 1 : 0;
+          const caseIndex = (bTL << 3) | (bTR << 2) | (bBR << 1) | bBL;
+          if (caseIndex === 0 || caseIndex === 15) continue;
+          const crossingPos = (axis, fixedCoord, vA, vB, coordA, coordB) => {
+            const t = (threshold - vA) / (vB - vA); const ct = Math.max(0, Math.min(1, t));
+            if (axis === 'x') return { x: coordA + ct * (coordB - coordA), y: fixedCoord };
+            return { x: fixedCoord, y: coordA + ct * (coordB - coordA) };
+          };
+          let top = null, right = null, bottom = null, left = null;
+          if (bTL !== bTR) top = crossingPos('x', cy, vTL, vTR, cx, cx + 1);
+          if (bTR !== bBR) right = crossingPos('y', cx + 1, vTR, vBR, cy, cy + 1);
+          if (bBL !== bBR) bottom = crossingPos('x', cy + 1, vBL, vBR, cx, cx + 1);
+          if (bTL !== bBL) left = crossingPos('y', cx, vTL, vBL, cy, cy + 1);
+          const addSeg = (p1, p2) => { if (p1 && p2) allSegments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); };
+          switch (caseIndex) {
+            case 1: addSeg(bottom, left); break; case 2: addSeg(bottom, right); break;
+            case 3: addSeg(left, right); break; case 4: addSeg(top, right); break;
+            case 5: addSeg(top, left); addSeg(bottom, right); break; case 6: addSeg(top, bottom); break;
+            case 7: addSeg(top, left); break; case 8: addSeg(top, left); break;
+            case 9: addSeg(top, bottom); break; case 10: addSeg(top, right); addSeg(bottom, left); break;
+            case 11: addSeg(top, right); break; case 12: addSeg(left, right); break;
+            case 13: addSeg(bottom, right); break; case 14: addSeg(bottom, left); break;
+          }
+        }
+      }
+
+      const coordKey = (x, y) => `${x.toFixed(6)},${y.toFixed(6)}`;
+      const pointToSeg = new Map();
+      for (let i = 0; i < allSegments.length; i++) {
+        const s = allSegments[i];
+        const k1 = coordKey(s.x1, s.y1), k2 = coordKey(s.x2, s.y2);
+        if (!pointToSeg.has(k1)) pointToSeg.set(k1, []);
+        if (!pointToSeg.has(k2)) pointToSeg.set(k2, []);
+        pointToSeg.get(k1).push(i); pointToSeg.get(k2).push(i);
+      }
+      const used = new Set(); const contours = [];
+      for (let i = 0; i < allSegments.length; i++) {
+        if (used.has(i)) continue; const pts = [];
+        let curIdx = i, cur = allSegments[i]; used.add(curIdx);
+        let start = { x: cur.x1, y: cur.y1 }, curr = { x: cur.x2, y: cur.y2 };
+        pts.push({ x: start.x, y: start.y }); pts.push({ x: curr.x, y: curr.y });
+        let found = true, iters = 0;
+        while (found && iters < allSegments.length + 10) {
+          found = false; iters++; const key = coordKey(curr.x, curr.y);
+          const cands = pointToSeg.get(key) || [];
+          for (const cIdx of cands) {
+            if (used.has(cIdx)) continue; const cSeg = allSegments[cIdx];
+            const ck1 = coordKey(cSeg.x1, cSeg.y1), ck2 = coordKey(cSeg.x2, cSeg.y2);
+            let next = null;
+            if (ck1 === key) next = { x: cSeg.x2, y: cSeg.y2 };
+            else if (ck2 === key) next = { x: cSeg.x1, y: cSeg.y1 };
+            if (next) { used.add(cIdx); pts.push({ x: next.x, y: next.y }); curr = next; found = true; break; }
+          }
+        }
+        const dist = Math.hypot(curr.x - start.x, curr.y - start.y);
+        const isClosed = dist < 0.01;
+        if (pts.length >= 3) contours.push({ points: pts, isClosed });
+      }
+
+      const totalArea = procW * procH, minArea = totalArea * 0.00005;
+      const filtered = contours.filter(c => {
+        let area = 0; const p = c.points;
+        for (let j = 0; j < p.length; j++) { const p1 = p[j], p2 = p[(j + 1) % p.length]; area += p1.x * p2.y - p2.x * p1.y; }
+        return Math.abs(area / 2) >= minArea;
+      });
+
+      const rdpSimplify = (points, epsilon) => {
+        if (points.length < 3) return points;
+        const first = points[0], last = points[points.length - 1];
+        const dx = last.x - first.x, dy = last.y - first.y, lenSq = dx * dx + dy * dy;
+        let maxDist = -1, maxIdx = -1;
+        for (let i = 1; i < points.length - 1; i++) {
+          let dist;
+          if (lenSq < 1e-12) dist = Math.hypot(points[i].x - first.x, points[i].y - first.y);
+          else {
+            const t = ((points[i].x - first.x) * dx + (points[i].y - first.y) * dy) / lenSq;
+            const ct = Math.max(0, Math.min(1, t));
+            dist = Math.hypot(points[i].x - (first.x + ct * dx), points[i].y - (first.y + ct * dy));
+          }
+          if (dist > maxDist) { maxDist = dist; maxIdx = i; }
+        }
+        if (maxDist <= epsilon) return [first, last];
+        const left = rdpSimplify(points.slice(0, maxIdx + 1), epsilon);
+        const right = rdpSimplify(points.slice(maxIdx), epsilon);
+        return [...left.slice(0, -1), ...right];
+      };
+      const chaikinSmooth = (points, isClosed, iters = 1) => {
+        if (points.length < 3) return points; let res = points;
+        for (let it = 0; it < iters; it++) {
+          const sm = []; const n = res.length; const lim = isClosed ? n : n - 1;
+          for (let i = 0; i < lim; i++) {
+            const p0 = res[i], p1 = res[(i + 1) % n];
+            sm.push({ x: 0.75 * p0.x + 0.25 * p1.x, y: 0.75 * p0.y + 0.25 * p1.y });
+            sm.push({ x: 0.25 * p0.x + 0.75 * p1.x, y: 0.25 * p0.y + 0.75 * p1.y });
+          }
+          if (!isClosed && res.length >= 2) sm.push({ x: res[res.length - 1].x, y: res[res.length - 1].y });
+          res = sm;
+        }
+        return res;
+      };
+
+      const processedContours = filtered.map(c => {
+        let pts = c.points;
+        if (c.isClosed && pts.length > 3) {
+          pts = rdpSimplify([...pts, pts[0]], 0.6);
+          if (pts.length > 2 && Math.abs(pts[0].x - pts[pts.length - 1].x) < 0.001) pts.pop();
+        } else { pts = rdpSimplify(pts, 0.6); }
+        pts = chaikinSmooth(pts, c.isClosed, 1);
+        return { points: pts, isClosed: c.isClosed };
+      });
+
+      this.State.originalContours = processedContours;
+      this.State.closed = processedContours.map(c => c.isClosed);
+      this.State.viewBox = { x: 0, y: 0, w: procW, h: procH };
+
+      document.getElementById('outline-status').textContent = `${processedContours.length} contours found`;
+      document.getElementById('btn-reset-zoom-outline').style.display = 'flex';
+      document.getElementById('btn-toggle-img-outline').style.display = 'flex';
+      document.getElementById('btn-view-mode-outline').style.display = 'flex';
+      document.getElementById('hint-bar-outline').style.display = 'block';
+      this.applySimplificationAndRender();
+
+    } catch (err) {
+      console.error(err); toast('Processing failed. Try another image or mode.', 'warning');
+    } finally {
+      this.State.isProcessing = false;
+      document.getElementById('outline-processing').classList.remove('active');
+    }
+  },
+  applySimplificationAndRender() {
+    if (!this.State.originalContours || this.State.originalContours.length === 0) return;
+    let totalOriginalPts = 0, totalCurrentPts = 0, totalPaths = [], totalCounts = { L: 0, Q: 0, C: 0, A: 0 };
+    for (const contour of this.State.originalContours) {
+      const originalPts = contour.points, closed = contour.isClosed;
+      totalOriginalPts += originalPts.length;
+      let simplifiedIndices = originalPts.map((_, i) => i);
+      if (this.State.mode === 'curve') {
+        const tol = this.getTolFromThreshold(this.State.threshold);
+        simplifiedIndices = simplifyCurveAutoIndices(simplifiedIndices, originalPts, tol, closed);
+      } else {
+        const targetCount = Math.max(2, Math.round((this.State.pointPct / 100) * originalPts.length));
+        simplifiedIndices = simplifyCurveToCountIndices(simplifiedIndices, originalPts, targetCount, closed);
+      }
+      const cr = fitCurvesForRenderingIndices(simplifiedIndices, originalPts, closed, this.State.mode === 'line');
+      totalPaths.push(`<path d="${cr.path}" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>`);
+      totalCurrentPts += simplifiedIndices.length;
+      totalCounts.L += cr.counts.L; totalCounts.Q += cr.counts.Q; totalCounts.C += cr.counts.C; totalCounts.A += cr.counts.A;
+    }
+    this.renderSvg(totalPaths.join('\n  '));
+    const reduction = totalOriginalPts > 0 ? Math.round((1 - totalCurrentPts / totalOriginalPts) * 100) : 0;
+    document.getElementById('outline-status').textContent = `${this.State.originalContours.length} contours`;
+    document.getElementById('outline-stat-original').textContent = `${totalOriginalPts} pts`;
+    document.getElementById('outline-stat-current').textContent = `${totalCurrentPts} pts`;
+    const redEl = document.getElementById('outline-stat-reduction');
+    redEl.textContent = `${reduction}%`; redEl.className = getReductionClass(reduction);
+    document.getElementById('outline-stat-contours').textContent = `${this.State.originalContours.length}`;
+    document.getElementById('btn-export-outline').disabled = false;
+  },
+  renderSvg(pathsHtml) {
+    const overlay = document.getElementById('preview-overlay-outline');
+    overlay.innerHTML = '';
+    const svgEl = document.createElementNS(this.SVG_NS, 'svg');
+    svgEl.setAttribute('xmlns', this.SVG_NS);
+    svgEl.setAttribute('viewBox', `0 0 ${this.State.viewBox.w} ${this.State.viewBox.h}`);
+    svgEl.style.width = '100%'; svgEl.style.height = '100%';
+    svgEl.innerHTML = pathsHtml;
+    overlay.appendChild(svgEl);
+  },
+  handleFile(file) {
+    if (!file.type.startsWith('image/')) { toast('Please drop an image file', 'warning'); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        this.originalImage = img;
+        const previewImg = document.getElementById('preview-image-outline');
+        previewImg.src = img.src; previewImg.style.display = 'block';
+        document.getElementById('drop-zone-outline').classList.add('hidden');
+        document.getElementById('preview-wrapper-outline').classList.add('active');
+        this.processImage(img);
+      };
+      img.onerror = () => toast('Failed to load image', 'warning');
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  },
+  exportSvg() {
+    if (!this.State.originalContours || this.State.originalContours.length === 0) return;
+    let totalPaths = [];
+    for (const contour of this.State.originalContours) {
+      const originalPts = contour.points, closed = contour.isClosed;
+      let simplifiedIndices = originalPts.map((_, i) => i);
+      if (this.State.mode === 'curve') {
+        simplifiedIndices = simplifyCurveAutoIndices(simplifiedIndices, originalPts, this.getTolFromThreshold(this.State.threshold), closed);
+      } else {
+        const targetCount = Math.max(2, Math.round((this.State.pointPct / 100) * originalPts.length));
+        simplifiedIndices = simplifyCurveToCountIndices(simplifiedIndices, originalPts, targetCount, closed);
+      }
+      const cr = fitCurvesForRenderingIndices(simplifiedIndices, originalPts, closed, this.State.mode === 'line');
+      totalPaths.push(`<path d="${cr.path}" fill="none" stroke="#000000" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>`);
+    }
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="${this.State.viewBox.x} ${this.State.viewBox.y} ${this.State.viewBox.w} ${this.State.viewBox.h}">
+  ${totalPaths.join('\n  ')}
+</svg>`;
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `outline-trace-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.svg`;
+    a.click(); URL.revokeObjectURL(url);
+    toast('SVG exported successfully', 'success');
+  },
+  applyPreset(preset) {
+    this.State.preset = preset;
+    this.State.threshold = getPresetValue(this.State.mode, preset);
+    this.updateSliderDisplay();
+    document.querySelectorAll('#panel-outline .btn-preset').forEach(b => b.classList.toggle('active', b.dataset.preset === preset));
+    this.applySimplificationAndRender();
+  },
+  setMode(mode) {
+    this.State.mode = mode;
+    document.querySelectorAll('#panel-outline .btn-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    this.applyPreset(this.State.preset);
+    this.updateSliderDisplay();
+    this.applySimplificationAndRender();
+  },
+  updateSliderDisplay() {
+    const pointValEl = document.getElementById('outline-point-value');
+    if (this.State.mode === 'curve') pointValEl.textContent = 'Fit';
+    else pointValEl.textContent = `${this.State.pointPct}%`;
+    document.getElementById('outline-threshold-value').textContent = `${this.State.threshold.toFixed(1)}%`;
+    document.getElementById('outline-point-slider').value = Math.max(1, Math.min(100, this.State.pointPct));
+    document.getElementById('outline-threshold-slider').value = Math.max(0, Math.min(30, this.State.threshold));
+    const pointGroup = document.getElementById('outline-point-group');
+    if (this.State.mode === 'curve') pointGroup.classList.add('disabled');
+    else pointGroup.classList.remove('disabled');
+  },
+  updateViewMode() {
+    const img = document.getElementById('preview-image-outline');
+    const overlay = document.getElementById('preview-overlay-outline');
+    const toggleImgBtn = document.getElementById('btn-toggle-img-outline');
+    toggleImgBtn.classList.remove('disabled');
+    switch(this.State.viewMode) {
+      case 'image':
+        img.style.opacity = '1'; overlay.style.opacity = '0'; toggleImgBtn.classList.add('disabled'); break;
+      case 'vector':
+        img.style.opacity = '0'; overlay.style.opacity = '1'; toggleImgBtn.classList.add('disabled'); break;
+      case 'both':
+      default:
+        img.style.opacity = this.State.imgVisible ? '1' : '0'; overlay.style.opacity = '1'; break;
+    }
+  },
+  setupEventListeners() {
+    const dropZone = document.getElementById('drop-zone-outline');
+    const fileInput = document.getElementById('file-input-outline');
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault(); dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length > 0) this.handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) this.handleFile(fileInput.files[0]); });
+
+    document.querySelectorAll('#panel-outline .btn-bg').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#panel-outline .btn-bg').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.State.bgMode = btn.dataset.bg;
+        if (this.originalImage) this.processImage(this.originalImage);
+      });
+    });
+    document.getElementById('bg-color-input-outline').addEventListener('input', (e) => {
+      const hex = e.target.value;
+      this.State.bgColor = {
+        r: parseInt(hex.slice(1, 3), 16), g: parseInt(hex.slice(3, 5), 16), b: parseInt(hex.slice(5, 7), 16)
+      };
+      this.State.bgMode = 'auto';
+      document.querySelectorAll('#panel-outline .btn-bg').forEach(b => b.classList.remove('active'));
+      document.getElementById('bg-color-label-outline').classList.add('active');
+      if (this.originalImage) this.processImage(this.originalImage);
+    });
+
+    document.querySelectorAll('#panel-outline .btn-mode').forEach(btn => btn.addEventListener('click', () => this.setMode(btn.dataset.mode)));
+    document.querySelectorAll('#panel-outline .btn-preset').forEach(btn => btn.addEventListener('click', () => this.applyPreset(btn.dataset.preset)));
+
+    document.getElementById('outline-point-slider').addEventListener('input', (e) => {
+      this.State.pointPct = parseInt(e.target.value);
+      if (this.State.mode === 'line') document.getElementById('outline-point-value').textContent = `${this.State.pointPct}%`;
+    });
+    document.getElementById('outline-point-slider').addEventListener('change', () => this.applySimplificationAndRender());
+    document.getElementById('outline-threshold-slider').addEventListener('input', (e) => {
+      this.State.threshold = parseFloat(e.target.value);
+      document.getElementById('outline-threshold-value').textContent = `${this.State.threshold.toFixed(1)}%`;
+    });
+    document.getElementById('outline-threshold-slider').addEventListener('change', () => this.applySimplificationAndRender());
+    document.getElementById('outline-auto-btn').addEventListener('click', () => this.applySimplificationAndRender());
+    document.getElementById('btn-export-outline').addEventListener('click', () => this.exportSvg());
+    
+    document.addEventListener('paste', (e) => {
+      if (!document.getElementById('view-outline').classList.contains('active')) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) { this.handleFile(file); e.preventDefault(); return; }
+        }
+      }
+    });
+
+    // Viewport Controls
+    new ViewportManager(
+      document.getElementById('viewport-outline'),
+      document.getElementById('preview-content-outline'),
+      document.getElementById('btn-reset-zoom-outline')
+    );
+    document.getElementById('btn-toggle-img-outline').addEventListener('click', () => {
+      if (this.State.viewMode !== 'both') return;
+      this.State.imgVisible = !this.State.imgVisible;
+      this.updateViewMode();
+      document.getElementById('eye-open-outline').style.display = this.State.imgVisible ? 'block' : 'none';
+      document.getElementById('eye-closed-outline').style.display = this.State.imgVisible ? 'none' : 'block';
+    });
+    document.getElementById('btn-view-mode-outline').addEventListener('click', () => {
+      const modes = ['both', 'image', 'vector'];
+      const currentIdx = modes.indexOf(this.State.viewMode);
+      this.State.viewMode = modes[(currentIdx + 1) % modes.length];
+      this.updateViewMode();
+    });
+
+    makeEditable('outline-point-value', {
+      getValue: () => this.State.pointPct,
+      setValue: (v) => { this.State.pointPct = v; this.updateSliderDisplay(); },
+      min: 0.01, max: 100, format: (v) => `${v}%`
+    });
+    makeEditable('outline-threshold-value', {
+      getValue: () => this.State.threshold,
+      setValue: (v) => { this.State.threshold = v; this.updateSliderDisplay(); this.applySimplificationAndRender(); },
+      min: 0, max: 100, format: (v) => `${v.toFixed(1)}%`
+    });
+  },
+  init() {
+    this.setupEventListeners();
+    this.applyPreset('quality');
+    this.updateSliderDisplay();
+  }
+};
+
+// ============================================================
+// TOOL 2: VECTOR SIMPLIFIER
 // ============================================================
 const Simplifier = {
   State: {
@@ -1041,13 +1818,8 @@ const Simplifier = {
     closed: true, viewBox: { x: 0, y: 0, w: 500, h: 500 },
     globalThreshold: 0.5, partialThreshold: 0.5,
     globalPointPct: 100, partialPointPct: 100,
-    globalMode: 'line', partialMode: 'line',
+    globalMode: 'curve', partialMode: 'curve', // Curve Mode Default
     globalPreset: 'quality', partialPreset: 'quality'
-  },
-  PanelView: {
-    global: { x: 0, y: 0, w: 500, h: 500 },
-    partial: { x: 0, y: 0, w: 500, h: 500 },
-    preview: { x: 0, y: 0, w: 500, h: 500 },
   },
   History: {
     global: { states: [], idx: -1 }, partial: { states: [], idx: -1 },
@@ -1062,7 +1834,6 @@ const Simplifier = {
     info(key) { const h = this[key]; return `${h.idx + 1}/${h.states.length}`; },
     reset(key) { this[key].states = []; this[key].idx = -1; }
   },
-  
   getTolFromThreshold(threshold) {
     const diag = Math.hypot(this.State.viewBox.w, this.State.viewBox.h);
     return (threshold / 100) * diag;
@@ -1119,7 +1890,6 @@ const Simplifier = {
     }
     return newIndices;
   },
-  
   generateComplexSample() {
     const points = [];
     for (let i = 0; i < 35; i++) { const t = i / 34; points.push({ x: 100 + t * 220, y: 120 + Math.sin(t * Math.PI * 3) * 0.6 }); }
@@ -1137,7 +1907,6 @@ const Simplifier = {
       if (Math.hypot(p0.x - pN.x, p0.y - pN.y) < 0.01) this.State.original.pop();
     }
     this.State.viewBox = getBBox(this.State.original);
-    this.resetPanelViews();
     this.State.global = this.State.original.map((_, i) => i);
     this.State.partial = this.State.global.slice();
     this.State.selection.clear();
@@ -1147,12 +1916,15 @@ const Simplifier = {
     this.History.push('global', this.State.global); this.History.push('partial', this.State.partial);
     this.updateSliderDisplay('global'); this.updateSliderDisplay('partial');
     this.renderAll();
+    document.getElementById('drop-zone-simplify').classList.add('hidden');
+    document.getElementById('svg-global').style.display = 'block';
+    document.getElementById('svg-partial').style.display = 'block';
+    document.getElementById('svg-preview').style.display = 'block';
+    document.getElementById('btn-reset-zoom-global').style.display = 'flex';
+    document.getElementById('btn-reset-zoom-partial').style.display = 'flex';
+    document.getElementById('btn-reset-zoom-preview').style.display = 'flex';
+    document.getElementById('hint-bar-partial').style.display = 'block';
     toast(`Complex sample loaded — ${this.State.original.length} pts`, 'info');
-  },
-  resetPanelViews() {
-    this.PanelView.global = { ...this.State.viewBox };
-    this.PanelView.partial = { ...this.State.viewBox };
-    this.PanelView.preview = { ...this.State.viewBox };
   },
   parseSvgPath(d) {
     const commands = d.match(/[MLCQAHVZ][^MLCQAHVZ]*/gi) || [];
@@ -1195,7 +1967,7 @@ const Simplifier = {
         const { points, closed } = this.parseSvgPath(pathEl.getAttribute('d'));
         if (points.length < 3) { toast('Path has too few points', 'warning'); return; }
         this.State.original = points; this.State.closed = closed;
-        this.State.viewBox = getBBox(this.State.original); this.resetPanelViews();
+        this.State.viewBox = getBBox(this.State.original);
         this.State.global = this.State.original.map((_, i) => i);
         this.State.partial = this.State.global.slice();
         this.State.selection.clear();
@@ -1204,6 +1976,14 @@ const Simplifier = {
         this.History.push('global', this.State.global); this.History.push('partial', this.State.partial);
         this.updateSliderDisplay('global'); this.updateSliderDisplay('partial');
         this.renderAll();
+        document.getElementById('drop-zone-simplify').classList.add('hidden');
+        document.getElementById('svg-global').style.display = 'block';
+        document.getElementById('svg-partial').style.display = 'block';
+        document.getElementById('svg-preview').style.display = 'block';
+        document.getElementById('btn-reset-zoom-global').style.display = 'flex';
+        document.getElementById('btn-reset-zoom-partial').style.display = 'flex';
+        document.getElementById('btn-reset-zoom-preview').style.display = 'flex';
+        document.getElementById('hint-bar-partial').style.display = 'block';
         toast(`Loaded "${file.name}" — ${points.length} points`, 'success');
       } catch (err) { toast('Failed to parse SVG: ' + err.message, 'warning'); }
     };
@@ -1221,9 +2001,7 @@ const Simplifier = {
     const a = document.createElement('a'); a.href = url; a.download = 'simplified.svg'; a.click();
     URL.revokeObjectURL(url); toast('Exported simplified.svg', 'success');
   },
-  
-  setPanelView(svg, panel) {
-    const vb = this.PanelView[panel];
+  setPanelView(svg, panel, vb) {
     svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
   },
   pointsToPath(indices, original, closed) {
@@ -1235,7 +2013,7 @@ const Simplifier = {
   },
   renderGlobal() {
     const svg = document.getElementById('svg-global');
-    this.setPanelView(svg, 'global'); svg.innerHTML = '';
+    this.setPanelView(svg, 'global', this.State.viewBox); svg.innerHTML = '';
     if (!this.State.original.length) return;
     const orig = document.createElementNS(SVG_NS, 'path');
     orig.setAttribute('d', this.pointsToPath(this.State.original.map((_, i) => i), this.State.original, this.State.closed));
@@ -1246,7 +2024,7 @@ const Simplifier = {
   },
   renderPartial() {
     const svg = document.getElementById('svg-partial');
-    this.setPanelView(svg, 'partial'); svg.innerHTML = '';
+    this.setPanelView(svg, 'partial', this.State.viewBox); svg.innerHTML = '';
     if (!this.State.original.length) return;
     const cr = fitCurvesForRenderingIndices(this.State.partial, this.State.original, this.State.closed, this.State.partialMode === 'line');
     const path = document.createElementNS(SVG_NS, 'path');
@@ -1265,7 +2043,7 @@ const Simplifier = {
   },
   renderPreview() {
     const svg = document.getElementById('svg-preview');
-    this.setPanelView(svg, 'preview'); svg.innerHTML = '';
+    this.setPanelView(svg, 'preview', this.State.viewBox); svg.innerHTML = '';
     if (!this.State.original.length) return;
     const orig = document.createElementNS(SVG_NS, 'path');
     orig.setAttribute('d', this.pointsToPath(this.State.original.map((_, i) => i), this.State.original, this.State.closed));
@@ -1281,17 +2059,14 @@ const Simplifier = {
     const cr = origCount > 0 ? fitCurvesForRenderingIndices(this.State.partial, this.State.original, this.State.closed, this.State.partialMode === 'line') : { segments: [], counts: {L:0,Q:0,C:0,A:0} };
     const diff = origCount > 0 ? computeCurveDifference(this.State.original, cr, this.State.closed) : 0;
     const reduction = origCount > 0 ? Math.round((1 - currCount / origCount) * 100) : 0;
-    
     document.getElementById('global-status').textContent = origCount > 0 ? `${this.State.global.length} pts` : '— pts';
     document.getElementById('partial-status').textContent = `${this.State.selection.size} selected`;
     document.getElementById('preview-status').textContent = origCount > 0 ? `${diff.toFixed(1)}% diff` : '— % diff';
     document.getElementById('stat-original').textContent = origCount > 0 ? `${origCount} pts` : '— pts';
     document.getElementById('stat-current').textContent = origCount > 0 ? `${currCount} pts` : '— pts';
-    
     const redEl = document.getElementById('stat-reduction');
     redEl.textContent = origCount > 0 ? `${reduction}%` : '— %';
     redEl.className = getReductionClass(reduction);
-    
     document.getElementById('global-history-info').textContent = this.History.info('global');
     document.getElementById('partial-history-info').textContent = this.History.info('partial');
     document.getElementById('global-undo').disabled = !this.History.canUndo('global');
@@ -1450,39 +2225,6 @@ const Simplifier = {
       }, 20);
     });
   },
-  screenToSVG(svg, clientX, clientY) {
-    const pt = svg.createSVGPoint(); pt.x = clientX; pt.y = clientY;
-    return pt.matrixTransform(svg.getScreenCTM().inverse());
-  },
-  setupZoomPan(panel) {
-    const svg = document.getElementById(`svg-${panel}`);
-    const container = document.getElementById(`viewport-${panel}`);
-    container.addEventListener('wheel', (e) => {
-      if (!e.ctrlKey) return; e.preventDefault();
-      const vb = this.PanelView[panel];
-      const pt = this.screenToSVG(svg, e.clientX, e.clientY);
-      const factor = e.deltaY > 0 ? 1.15 : 0.87;
-      const origDiag = Math.hypot(this.State.viewBox.w, this.State.viewBox.h);
-      const newDiag = Math.hypot(vb.w, vb.h) * factor;
-      if (newDiag < origDiag * 0.02 || newDiag > origDiag * 5) return;
-      vb.x = pt.x - (pt.x - vb.x) * factor; vb.y = pt.y - (pt.y - vb.y) * factor;
-      vb.w *= factor; vb.h *= factor;
-      svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
-    }, { passive: false });
-    let panState = null;
-    container.addEventListener('mousedown', (e) => {
-      if (e.button === 1) { e.preventDefault(); panState = { startX: e.clientX, startY: e.clientY, vb: { ...this.PanelView[panel] } }; }
-    });
-    container.addEventListener('mousemove', (e) => {
-      if (!panState) return; const rect = svg.getBoundingClientRect();
-      this.PanelView[panel].x = panState.vb.x - (e.clientX - panState.startX) * (panState.vb.w / rect.width);
-      this.PanelView[panel].y = panState.vb.y - (e.clientY - panState.startY) * (panState.vb.h / rect.height);
-      const vb = this.PanelView[panel]; svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
-    });
-    const endPan = (e) => { if (e.button === 1) panState = null; };
-    container.addEventListener('mouseup', endPan);
-    container.addEventListener('mouseleave', () => { panState = null; });
-  },
   setupDragSelection() {
     const svg = document.getElementById('svg-partial');
     const container = document.getElementById('viewport-partial');
@@ -1500,15 +2242,15 @@ const Simplifier = {
       document.getElementById('partial-status').textContent = `${this.State.selection.size} selected`;
     };
     container.addEventListener('mousedown', (e) => {
-      if (e.button !== 0 || e.target.classList.contains('btn-reset-zoom')) return;
+      if (e.button !== 0 || e.target.classList.contains('ctrl-btn')) return;
       e.preventDefault();
-      const pt = this.screenToSVG(svg, e.clientX, e.clientY);
+      const pt = screenToSVG(svg, e.clientX, e.clientY);
       const pointIdx = findPointAt(pt.x, pt.y, this.State.partial, this.State.original);
       const mode = e.ctrlKey ? 'subtract' : (e.shiftKey ? 'add' : 'replace');
       dragState = { startX: pt.x, startY: pt.y, curX: pt.x, curY: pt.y, mode, pointIdx, isDrag: false };
     });
     container.addEventListener('mousemove', (e) => {
-      if (!dragState) return; const pt = this.screenToSVG(svg, e.clientX, e.clientY);
+      if (!dragState) return; const pt = screenToSVG(svg, e.clientX, e.clientY);
       dragState.curX = pt.x; dragState.curY = pt.y;
       const dist = Math.hypot(pt.x - dragState.startX, pt.y - dragState.startY);
       if (!dragState.isDrag && dist > CLICK_THRESHOLD) {
@@ -1569,46 +2311,38 @@ const Simplifier = {
     container.addEventListener('mouseup', endDrag);
     container.addEventListener('mouseleave', endDrag);
   },
-  makeEditable(elementId, opts) {
-    const el = document.getElementById(elementId);
-    const { getValue, setValue, min, max, format } = opts;
-    el.style.cursor = 'pointer'; el.title = 'Click to edit';
-    let editing = false;
-    el.addEventListener('click', () => {
-      if (editing) return; editing = true;
-      const input = document.createElement('input');
-      input.type = 'number'; input.value = getValue(); input.step = 'any';
-      input.style.cssText = 'width:100%;font-size:11px;font-family:JetBrains Mono,monospace;background:transparent;border:none;color:inherit;text-align:center;outline:none;padding:0;';
-      el.classList.add('editing'); el.textContent = ''; el.appendChild(input);
-      input.focus(); input.select();
-      let done = false;
-      const finish = (apply) => {
-        if (done) return; done = true;
-        if (apply) { const v = parseFloat(input.value); if (!isNaN(v)) setValue(Math.max(min, Math.min(max, v))); }
-        editing = false; el.classList.remove('editing'); el.textContent = format(getValue());
-      };
-      input.addEventListener('blur', () => finish(true));
-      input.addEventListener('keydown', (e) => {
-        e.stopPropagation();
-        if (e.key === 'Enter') { e.preventDefault(); finish(true); }
-        if (e.key === 'Escape') { e.preventDefault(); finish(false); }
-      });
-    });
-  },
   setupEventListeners() {
     document.getElementById('btn-sample').addEventListener('click', () => this.loadSample());
     document.getElementById('file-input-simplify').addEventListener('change', (e) => { if (e.target.files[0]) this.handleFileUpload(e.target.files[0]); e.target.value = ''; });
     document.getElementById('btn-export-simplify').addEventListener('click', () => this.exportSvg());
 
-    document.querySelectorAll('#view-simplify .btn-reset-zoom').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation(); const panel = btn.dataset.panel;
-        this.PanelView[panel] = { ...this.State.viewBox };
-        const svg = document.getElementById(`svg-${panel}`);
-        svg.setAttribute('viewBox', `${this.State.viewBox.x} ${this.State.viewBox.y} ${this.State.viewBox.w} ${this.State.viewBox.h}`);
-      });
+    const dropZone = document.getElementById('drop-zone-simplify');
+    const hiddenInput = document.getElementById('file-input-simplify-hidden');
+    dropZone.addEventListener('click', () => hiddenInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault(); dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length > 0) this.handleFileUpload(e.dataTransfer.files[0]);
     });
-    this.setupZoomPan('global'); this.setupZoomPan('partial'); this.setupZoomPan('preview');
+    hiddenInput.addEventListener('change', () => { if (hiddenInput.files.length > 0) this.handleFileUpload(hiddenInput.files[0]); });
+    document.addEventListener('paste', (e) => {
+      if (!document.getElementById('view-simplify').classList.contains('active')) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/svg+xml')) {
+          const file = item.getAsFile();
+          if (file) { this.handleFileUpload(file); e.preventDefault(); return; }
+        }
+      }
+    });
+
+    // Viewport Managers
+    new ViewportManager(document.getElementById('viewport-global'), document.getElementById('svg-global'), document.getElementById('btn-reset-zoom-global'));
+    new ViewportManager(document.getElementById('viewport-partial'), document.getElementById('svg-partial'), document.getElementById('btn-reset-zoom-partial'));
+    new ViewportManager(document.getElementById('viewport-preview'), document.getElementById('svg-preview'), document.getElementById('btn-reset-zoom-preview'));
+
     document.querySelectorAll('.btn-mode').forEach(btn => {
       btn.addEventListener('click', () => this.setMode(btn.dataset.window, btn.dataset.mode));
     });
@@ -1663,10 +2397,10 @@ const Simplifier = {
       btn.addEventListener('click', () => this.applyPreset(btn.dataset.window, btn.dataset.preset));
     });
     this.setupDragSelection();
-    this.makeEditable('global-point-value', { getValue: () => this.State.globalPointPct, setValue: (v) => { this.State.globalPointPct = v; this.updateSliderDisplay('global'); }, min: 0.01, max: 100, format: (v) => `${v}%` });
-    this.makeEditable('global-threshold-value', { getValue: () => this.State.globalThreshold, setValue: (v) => { this.State.globalThreshold = v; this.updateSliderDisplay('global'); this.renderAll(); }, min: 0, max: 100, format: (v) => `${v.toFixed(1)}%` });
-    this.makeEditable('partial-point-value', { getValue: () => this.State.partialPointPct, setValue: (v) => { this.State.partialPointPct = v; this.updateSliderDisplay('partial'); }, min: 0.01, max: 100, format: (v) => `${v}%` });
-    this.makeEditable('partial-threshold-value', { getValue: () => this.State.partialThreshold, setValue: (v) => { this.State.partialThreshold = v; this.updateSliderDisplay('partial'); this.renderAll(); }, min: 0, max: 100, format: (v) => `${v.toFixed(1)}%` });
+    makeEditable('global-point-value', { getValue: () => this.State.globalPointPct, setValue: (v) => { this.State.globalPointPct = v; this.updateSliderDisplay('global'); }, min: 0.01, max: 100, format: (v) => `${v}%` });
+    makeEditable('global-threshold-value', { getValue: () => this.State.globalThreshold, setValue: (v) => { this.State.globalThreshold = v; this.updateSliderDisplay('global'); this.renderAll(); }, min: 0, max: 100, format: (v) => `${v.toFixed(1)}%` });
+    makeEditable('partial-point-value', { getValue: () => this.State.partialPointPct, setValue: (v) => { this.State.partialPointPct = v; this.updateSliderDisplay('partial'); }, min: 0.01, max: 100, format: (v) => `${v}%` });
+    makeEditable('partial-threshold-value', { getValue: () => this.State.partialThreshold, setValue: (v) => { this.State.partialThreshold = v; this.updateSliderDisplay('partial'); this.renderAll(); }, min: 0, max: 100, format: (v) => `${v.toFixed(1)}%` });
   },
   init() {
     this.setupEventListeners();
@@ -1679,41 +2413,35 @@ const Simplifier = {
 };
 
 // ============================================================
-// 2. VECTOR TRACER LOGIC
+// TOOL 3: IMAGE TRACER
 // ============================================================
-const Tracer = {
+const ImageTracer = {
   State: {
-    originalContours: [], closed: [],
+    originalContours: [], closed: [], colors: [],
     viewBox: { x: 0, y: 0, w: 500, h: 500 },
     threshold: 0.5, pointPct: 100,
-    mode: 'line', preset: 'quality',
-    bgMode: 'auto', bgColor: { r: 255, g: 255, b: 255 },
+    mode: 'curve', preset: 'quality',
+    colorThreshold: 5, lineWidth: 1,
+    colorful: false, targetColorEnabled: false,
+    targetColor: { r: 34, g: 211, b: 238 },
+    targetTolerance: 15,
     isProcessing: false,
+    imgVisible: true,
+    viewMode: 'both'
   },
-  PanelView: { trace: { x: 0, y: 0, w: 500, h: 500 } },
   originalImage: null,
-  MAX_PROCESSING_DIM: 1400,
-
+  MAX_PROCESSING_DIM: 1000,
+  SVG_NS: 'http://www.w3.org/2000/svg',
+  
   getTolFromThreshold(threshold) {
     const diag = Math.hypot(this.State.viewBox.w, this.State.viewBox.h);
     return (threshold / 100) * diag;
   },
-  detectBgColor(pixels, w, h) {
-    const samples = []; const step = Math.max(1, Math.floor(w / 50));
-    for (let x = 0; x < w; x += step) { samples.push([x, 0]); samples.push([x, h - 1]); }
-    for (let y = 0; y < h; y += step) { samples.push([0, y]); samples.push([w - 1, y]); }
-    let rSum = 0, gSum = 0, bSum = 0, count = 0;
-    for (const [x, y] of samples) {
-      const idx = (y * w + x) * 4;
-      rSum += pixels[idx]; gSum += pixels[idx + 1]; bSum += pixels[idx + 2]; count++;
-    }
-    return { r: Math.round(rSum / count), g: Math.round(gSum / count), b: Math.round(bSum / count) };
-  },
   async processImage(img) {
     if (this.State.isProcessing) return;
     this.State.isProcessing = true;
-    document.getElementById('trace-processing').classList.add('active');
-    document.getElementById('trace-status').textContent = 'Processing...';
+    document.getElementById('image-processing').classList.add('active');
+    document.getElementById('image-status').textContent = 'Processing...';
     await sleep(50);
     try {
       const origW = img.naturalWidth, origH = img.naturalHeight;
@@ -1721,175 +2449,299 @@ const Tracer = {
       if (maxDim <= this.MAX_PROCESSING_DIM) { procW = origW; procH = origH; }
       else { const scale = this.MAX_PROCESSING_DIM / maxDim; procW = Math.round(origW * scale); procH = Math.round(origH * scale); }
 
-      const canvas = document.getElementById('processingCanvas');
+      const canvas = document.getElementById('processingCanvasImage');
       canvas.width = procW; canvas.height = procH;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       ctx.clearRect(0, 0, procW, procH); ctx.drawImage(img, 0, 0, procW, procH);
       const imageData = ctx.getImageData(0, 0, procW, procH);
       const pixels = imageData.data;
 
-      if (this.State.bgMode === 'auto') {
-        this.State.bgColor = this.detectBgColor(pixels, procW, procH);
-        const hex = '#' + [this.State.bgColor.r, this.State.bgColor.g, this.State.bgColor.b].map(c => c.toString(16).padStart(2, '0')).join('');
-        document.getElementById('bg-color-input-trace').value = hex;
-      }
-
-      const gw = procW + 1, gh = procH + 1, grid = new Float32Array(gw * gh);
-      let threshold = 0.5;
-      for (let gy = 0; gy < gh; gy++) {
-        for (let gx = 0; gx < gw; gx++) {
-          const px = Math.min(gx, procW - 1), py = Math.min(gy, procH - 1);
-          const idx = (py * procW + px) * 4;
-          const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2], a = pixels[idx + 3];
-          let bgValue;
-          if (this.State.bgMode === 'transparent') { bgValue = 1.0 - (a / 255); }
-          else if (this.State.bgMode === 'white') { bgValue = Math.max(r, g, b) / 255; threshold = 0.94; }
-          else {
-            const dist = Math.sqrt(Math.pow(r - this.State.bgColor.r, 2) + Math.pow(g - this.State.bgColor.g, 2) + Math.pow(b - this.State.bgColor.b, 2));
-            bgValue = 1.0 - Math.min(1, dist / 60.0); threshold = 0.5;
-          }
-          grid[gy * gw + gx] = bgValue;
+      const mask = new Uint8Array(procW * procH);
+      
+      if (this.State.targetColorEnabled) {
+        const tol = this.State.targetTolerance * 0.01 * 441;
+        const tc = this.State.targetColor;
+        for (let i = 0; i < mask.length; i++) {
+          const idx = i * 4;
+          const dr = pixels[idx] - tc.r, dg = pixels[idx + 1] - tc.g, db = pixels[idx + 2] - tc.b;
+          if (Math.sqrt(dr*dr + dg*dg + db*db) < tol) mask[i] = 1;
         }
-      }
-
-      const allSegments = [];
-      for (let cy = 0; cy < procH; cy++) {
-        for (let cx = 0; cx < procW; cx++) {
-          const vTL = grid[cy * gw + cx], vTR = grid[cy * gw + (cx + 1)];
-          const vBR = grid[(cy + 1) * gw + (cx + 1)], vBL = grid[(cy + 1) * gw + cx];
-          const bTL = vTL > threshold ? 1 : 0, bTR = vTR > threshold ? 1 : 0;
-          const bBR = vBR > threshold ? 1 : 0, bBL = vBL > threshold ? 1 : 0;
-          const caseIndex = (bTL << 3) | (bTR << 2) | (bBR << 1) | bBL;
-          if (caseIndex === 0 || caseIndex === 15) continue;
-          const crossingPos = (axis, fixedCoord, vA, vB, coordA, coordB) => {
-            const t = (threshold - vA) / (vB - vA); const ct = Math.max(0, Math.min(1, t));
-            if (axis === 'x') return { x: coordA + ct * (coordB - coordA), y: fixedCoord };
-            return { x: fixedCoord, y: coordA + ct * (coordB - coordA) };
-          };
-          let top = null, right = null, bottom = null, left = null;
-          if (bTL !== bTR) top = crossingPos('x', cy, vTL, vTR, cx, cx + 1);
-          if (bTR !== bBR) right = crossingPos('y', cx + 1, vTR, vBR, cy, cy + 1);
-          if (bBL !== bBR) bottom = crossingPos('x', cy + 1, vBL, vBR, cx, cx + 1);
-          if (bTL !== bBL) left = crossingPos('y', cx, vTL, vBL, cy, cy + 1);
-          const addSeg = (p1, p2) => { if (p1 && p2) allSegments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); };
-          switch (caseIndex) {
-            case 1: addSeg(bottom, left); break; case 2: addSeg(bottom, right); break;
-            case 3: addSeg(left, right); break; case 4: addSeg(top, right); break;
-            case 5: addSeg(top, left); addSeg(bottom, right); break; case 6: addSeg(top, bottom); break;
-            case 7: addSeg(top, left); break; case 8: addSeg(top, left); break;
-            case 9: addSeg(top, bottom); break; case 10: addSeg(top, right); addSeg(bottom, left); break;
-            case 11: addSeg(top, right); break; case 12: addSeg(left, right); break;
-            case 13: addSeg(bottom, right); break; case 14: addSeg(bottom, left); break;
+        if (this.State.lineWidth > 0) {
+          this.dilateMask(mask, procW, procH, this.State.lineWidth);
+          this.erodeMask(mask, procW, procH, this.State.lineWidth);
+        }
+        this.skeletonize(mask, procW, procH);
+        const contours = this.traceCenterlines(mask, procW, procH);
+        this.State.originalContours = contours.map(c => ({ points: c, isClosed: false }));
+        this.State.colors = contours.map(() => '#000000');
+      } else {
+        const tol = this.State.colorThreshold * 0.01 * 441;
+        if (this.State.lineWidth > 0) this.blurImage(pixels, procW, procH, this.State.lineWidth);
+        for (let y = 0; y < procH - 1; y++) {
+          for (let x = 0; x < procW - 1; x++) {
+            const i = y * procW + x;
+            const idx = i * 4;
+            const idxR = (y * procW + x + 1) * 4;
+            const idxD = ((y + 1) * procW + x) * 4;
+            const drR = pixels[idx] - pixels[idxR], dgR = pixels[idx+1] - pixels[idxR+1], dbR = pixels[idx+2] - pixels[idxR+2];
+            const drD = pixels[idx] - pixels[idxD], dgD = pixels[idx+1] - pixels[idxD+1], dbD = pixels[idx+2] - pixels[idxD+2];
+            if (Math.sqrt(drR*drR + dgR*dgR + dbR*dbR) > tol || Math.sqrt(drD*drD + dgD*dgD + dbD*dbD) > tol) {
+              mask[i] = 1;
+            }
           }
         }
-      }
-
-      const coordKey = (x, y) => `${x.toFixed(6)},${y.toFixed(6)}`;
-      const pointToSeg = new Map();
-      for (let i = 0; i < allSegments.length; i++) {
-        const s = allSegments[i];
-        const k1 = coordKey(s.x1, s.y1), k2 = coordKey(s.x2, s.y2);
-        if (!pointToSeg.has(k1)) pointToSeg.set(k1, []);
-        if (!pointToSeg.has(k2)) pointToSeg.set(k2, []);
-        pointToSeg.get(k1).push(i); pointToSeg.get(k2).push(i);
-      }
-      const used = new Set(); const contours = [];
-      for (let i = 0; i < allSegments.length; i++) {
-        if (used.has(i)) continue; const pts = [];
-        let curIdx = i, cur = allSegments[i]; used.add(curIdx);
-        let start = { x: cur.x1, y: cur.y1 }, curr = { x: cur.x2, y: cur.y2 };
-        pts.push({ x: start.x, y: start.y }); pts.push({ x: curr.x, y: curr.y });
-        let found = true, iters = 0;
-        while (found && iters < allSegments.length + 10) {
-          found = false; iters++; const key = coordKey(curr.x, curr.y);
-          const cands = pointToSeg.get(key) || [];
-          for (const cIdx of cands) {
-            if (used.has(cIdx)) continue; const cSeg = allSegments[cIdx];
-            const ck1 = coordKey(cSeg.x1, cSeg.y1), ck2 = coordKey(cSeg.x2, cSeg.y2);
-            let next = null;
-            if (ck1 === key) next = { x: cSeg.x2, y: cSeg.y2 };
-            else if (ck2 === key) next = { x: cSeg.x1, y: cSeg.y1 };
-            if (next) { used.add(cIdx); pts.push({ x: next.x, y: next.y }); curr = next; found = true; break; }
+        const contours = this.marchingSquares(mask, procW, procH);
+        const minArea = procW * procH * 0.0005;
+        this.State.originalContours = [];
+        this.State.colors = [];
+        for (const c of contours) {
+          if (c.points.length < 3) continue;
+          let area = 0; const p = c.points;
+          for (let j = 0; j < p.length; j++) { const p1 = p[j], p2 = p[(j + 1) % p.length]; area += p1.x * p2.y - p2.x * p1.y; }
+          if (Math.abs(area / 2) < minArea) continue;
+          this.State.originalContours.push(c);
+          if (this.State.colorful) {
+            let cx = 0, cy = 0;
+            for (const pt of c.points) { cx += pt.x; cy += pt.y; }
+            cx = Math.floor(cx / c.points.length); cy = Math.floor(cy / c.points.length);
+            const cIdx = (cy * procW + cx) * 4;
+            const hex = '#' + [pixels[cIdx], pixels[cIdx+1], pixels[cIdx+2]].map(v => v.toString(16).padStart(2, '0')).join('');
+            this.State.colors.push(hex);
+          } else {
+            this.State.colors.push('#000000');
           }
         }
-        const dist = Math.hypot(curr.x - start.x, curr.y - start.y);
-        const isClosed = dist < 0.01;
-        if (pts.length >= 3) contours.push({ points: pts, isClosed });
       }
-
-      const totalArea = procW * procH, minArea = totalArea * 0.00005;
-      const filtered = contours.filter(c => {
-        let area = 0; const p = c.points;
-        for (let j = 0; j < p.length; j++) { const p1 = p[j], p2 = p[(j + 1) % p.length]; area += p1.x * p2.y - p2.x * p1.y; }
-        return Math.abs(area / 2) >= minArea;
-      });
-
-      const rdpSimplify = (points, epsilon) => {
-        if (points.length < 3) return points;
-        const first = points[0], last = points[points.length - 1];
-        const dx = last.x - first.x, dy = last.y - first.y, lenSq = dx * dx + dy * dy;
-        let maxDist = -1, maxIdx = -1;
-        for (let i = 1; i < points.length - 1; i++) {
-          let dist;
-          if (lenSq < 1e-12) dist = Math.hypot(points[i].x - first.x, points[i].y - first.y);
-          else {
-            const t = ((points[i].x - first.x) * dx + (points[i].y - first.y) * dy) / lenSq;
-            const ct = Math.max(0, Math.min(1, t));
-            dist = Math.hypot(points[i].x - (first.x + ct * dx), points[i].y - (first.y + ct * dy));
-          }
-          if (dist > maxDist) { maxDist = dist; maxIdx = i; }
-        }
-        if (maxDist <= epsilon) return [first, last];
-        const left = rdpSimplify(points.slice(0, maxIdx + 1), epsilon);
-        const right = rdpSimplify(points.slice(maxIdx), epsilon);
-        return [...left.slice(0, -1), ...right];
-      };
-      const chaikinSmooth = (points, isClosed, iters = 1) => {
-        if (points.length < 3) return points; let res = points;
-        for (let it = 0; it < iters; it++) {
-          const sm = []; const n = res.length; const lim = isClosed ? n : n - 1;
-          for (let i = 0; i < lim; i++) {
-            const p0 = res[i], p1 = res[(i + 1) % n];
-            sm.push({ x: 0.75 * p0.x + 0.25 * p1.x, y: 0.75 * p0.y + 0.25 * p1.y });
-            sm.push({ x: 0.25 * p0.x + 0.75 * p1.x, y: 0.25 * p0.y + 0.75 * p1.y });
-          }
-          if (!isClosed && res.length >= 2) sm.push({ x: res[res.length - 1].x, y: res[res.length - 1].y });
-          res = sm;
-        }
-        return res;
-      };
-
-      const processedContours = filtered.map(c => {
-        let pts = c.points;
-        if (c.isClosed && pts.length > 3) {
-          pts = rdpSimplify([...pts, pts[0]], 0.6);
-          if (pts.length > 2 && Math.abs(pts[0].x - pts[pts.length - 1].x) < 0.001) pts.pop();
-        } else { pts = rdpSimplify(pts, 0.6); }
-        pts = chaikinSmooth(pts, c.isClosed, 1);
-        return { points: pts, isClosed: c.isClosed };
-      });
-
-      this.State.originalContours = processedContours;
-      this.State.closed = processedContours.map(c => c.isClosed);
       this.State.viewBox = { x: 0, y: 0, w: procW, h: procH };
-      this.PanelView.trace = { ...this.State.viewBox };
-
-      document.getElementById('trace-status').textContent = `${processedContours.length} contours found`;
-      document.getElementById('btn-reset-zoom-trace').classList.add('visible');
-      document.getElementById('hint-bar-trace').style.display = 'block';
+      document.getElementById('image-status').textContent = `${this.State.originalContours.length} contours found`;
+      document.getElementById('btn-reset-zoom-image').style.display = 'flex';
+      document.getElementById('btn-toggle-img-image').style.display = 'flex';
+      document.getElementById('btn-view-mode-image').style.display = 'flex';
+      document.getElementById('hint-bar-image').style.display = 'block';
       this.applySimplificationAndRender();
-
     } catch (err) {
       console.error(err); toast('Processing failed. Try another image or mode.', 'warning');
     } finally {
       this.State.isProcessing = false;
-      document.getElementById('trace-processing').classList.remove('active');
+      document.getElementById('image-processing').classList.remove('active');
     }
+  },
+  dilateMask(mask, w, h, radius) {
+    const copy = new Uint8Array(mask);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (copy[y * w + x]) continue;
+        let found = false;
+        for (let dy = -radius; dy <= radius && !found; dy++) {
+          for (let dx = -radius; dx <= radius && !found; dx++) {
+            const nx = x + dx, ny = y + dy;
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h && copy[ny * w + nx]) found = true;
+          }
+        }
+        if (found) mask[y * w + x] = 1;
+      }
+    }
+  },
+  erodeMask(mask, w, h, radius) {
+    const copy = new Uint8Array(mask);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (!copy[y * w + x]) continue;
+        let found = false;
+        for (let dy = -radius; dy <= radius && !found; dy++) {
+          for (let dx = -radius; dx <= radius && !found; dx++) {
+            const nx = x + dx, ny = y + dy;
+            if (nx < 0 || nx >= w || ny < 0 || ny >= h || !copy[ny * w + nx]) found = true;
+          }
+        }
+        if (found) mask[y * w + x] = 0;
+      }
+    }
+  },
+  blurImage(pixels, w, h, radius) {
+    const copy = new Uint8ClampedArray(pixels);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        let r=0, g=0, b=0, count=0;
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            const nx = x + dx, ny = y + dy;
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+              const idx = (ny * w + nx) * 4;
+              r += copy[idx]; g += copy[idx+1]; b += copy[idx+2]; count++;
+            }
+          }
+        }
+        const idx = (y * w + x) * 4;
+        pixels[idx] = r/count; pixels[idx+1] = g/count; pixels[idx+2] = b/count;
+      }
+    }
+  },
+  skeletonize(mask, w, h) {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      let toRemove = [];
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = y * w + x;
+          if (!mask[i]) continue;
+          const p2 = mask[(y-1)*w+x], p3 = mask[(y-1)*w+(x+1)], p4 = mask[y*w+(x+1)], p5 = mask[(y+1)*w+(x+1)];
+          const p6 = mask[(y+1)*w+x], p7 = mask[(y+1)*w+(x-1)], p8 = mask[y*w+(x-1)], p9 = mask[(y-1)*w+(x-1)];
+          const B = p2+p3+p4+p5+p6+p7+p8+p9;
+          if (B < 2 || B > 6) continue;
+          const seq = [p2,p3,p4,p5,p6,p7,p8,p9,p2];
+          let A = 0;
+          for (let j = 0; j < 8; j++) if (seq[j] === 0 && seq[j+1] === 1) A++;
+          if (A !== 1) continue;
+          if (p2 * p4 * p6 !== 0 || p4 * p6 * p8 !== 0) continue;
+          toRemove.push(i);
+        }
+      }
+      if (toRemove.length > 0) { toRemove.forEach(i => mask[i] = 0); changed = true; }
+      toRemove = [];
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = y * w + x;
+          if (!mask[i]) continue;
+          const p2 = mask[(y-1)*w+x], p3 = mask[(y-1)*w+(x+1)], p4 = mask[y*w+(x+1)], p5 = mask[(y+1)*w+(x+1)];
+          const p6 = mask[(y+1)*w+x], p7 = mask[(y+1)*w+(x-1)], p8 = mask[y*w+(x-1)], p9 = mask[(y-1)*w+(x-1)];
+          const B = p2+p3+p4+p5+p6+p7+p8+p9;
+          if (B < 2 || B > 6) continue;
+          const seq = [p2,p3,p4,p5,p6,p7,p8,p9,p2];
+          let A = 0;
+          for (let j = 0; j < 8; j++) if (seq[j] === 0 && seq[j+1] === 1) A++;
+          if (A !== 1) continue;
+          if (p2 * p4 * p8 !== 0 || p2 * p6 * p8 !== 0) continue;
+          toRemove.push(i);
+        }
+      }
+      if (toRemove.length > 0) { toRemove.forEach(i => mask[i] = 0); changed = true; }
+    }
+  },
+  traceCenterlines(mask, w, h) {
+    const visited = new Uint8Array(w * h);
+    const contours = [];
+    const dirs = [[0,-1], [1,-1], [1,0], [1,1], [0,1], [-1,1], [-1,0], [-1,-1]];
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        if (!mask[i] || visited[i]) continue;
+        let neighbors = 0;
+        for (const [dx, dy] of dirs) {
+          const nx = x + dx, ny = y + dy;
+          if (nx >= 0 && nx < w && ny >= 0 && ny < h && mask[ny * w + nx]) neighbors++;
+        }
+        if (neighbors === 1 || neighbors === 0) {
+          const path = this.traceLine(mask, visited, x, y, w, h, dirs);
+          if (path.length > 2) contours.push(path);
+        }
+      }
+    }
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        if (mask[i] && !visited[i]) {
+          const path = this.traceLine(mask, visited, x, y, w, h, dirs);
+          if (path.length > 2) contours.push(path);
+        }
+      }
+    }
+    return contours;
+  },
+  traceLine(mask, visited, startX, startY, w, h, dirs) {
+    const path = [{x: startX, y: startY}];
+    visited[startY * w + startX] = 1;
+    let cx = startX, cy = startY;
+    while (true) {
+      let foundNext = false;
+      for (const [dx, dy] of dirs) {
+        const nx = cx + dx, ny = cy + dy;
+        if (nx >= 0 && nx < w && ny >= 0 && ny < h && mask[ny * w + nx] && !visited[ny * w + nx]) {
+          path.push({x: nx, y: ny});
+          visited[ny * w + nx] = 1;
+          cx = nx; cy = ny;
+          foundNext = true;
+          break;
+        }
+      }
+      if (!foundNext) break;
+    }
+    return path;
+  },
+  marchingSquares(mask, w, h) {
+    const contours = [];
+    const allSegments = [];
+    const threshold = 0.5;
+    for (let cy = 0; cy < h - 1; cy++) {
+      for (let cx = 0; cx < w - 1; cx++) {
+        const vTL = mask[cy * w + cx], vTR = mask[cy * w + (cx + 1)];
+        const vBR = mask[(cy + 1) * w + (cx + 1)], vBL = mask[(cy + 1) * w + cx];
+        const bTL = vTL > threshold ? 1 : 0, bTR = vTR > threshold ? 1 : 0;
+        const bBR = vBR > threshold ? 1 : 0, bBL = vBL > threshold ? 1 : 0;
+        const caseIndex = (bTL << 3) | (bTR << 2) | (bBR << 1) | bBL;
+        if (caseIndex === 0 || caseIndex === 15) continue;
+        const crossingPos = (axis, fixedCoord, vA, vB, coordA, coordB) => {
+          const t = (threshold - vA) / (vB - vA); const ct = Math.max(0, Math.min(1, t));
+          if (axis === 'x') return { x: coordA + ct * (coordB - coordA), y: fixedCoord };
+          return { x: fixedCoord, y: coordA + ct * (coordB - coordA) };
+        };
+        let top = null, right = null, bottom = null, left = null;
+        if (bTL !== bTR) top = crossingPos('x', cy, vTL, vTR, cx, cx + 1);
+        if (bTR !== bBR) right = crossingPos('y', cx + 1, vTR, vBR, cy, cy + 1);
+        if (bBL !== bBR) bottom = crossingPos('x', cy + 1, vBL, vBR, cx, cx + 1);
+        if (bTL !== bBL) left = crossingPos('y', cx, vTL, vBL, cy, cy + 1);
+        const addSeg = (p1, p2) => { if (p1 && p2) allSegments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); };
+        switch (caseIndex) {
+          case 1: addSeg(bottom, left); break; case 2: addSeg(bottom, right); break;
+          case 3: addSeg(left, right); break; case 4: addSeg(top, right); break;
+          case 5: addSeg(top, left); addSeg(bottom, right); break; case 6: addSeg(top, bottom); break;
+          case 7: addSeg(top, left); break; case 8: addSeg(top, left); break;
+          case 9: addSeg(top, bottom); break; case 10: addSeg(top, right); addSeg(bottom, left); break;
+          case 11: addSeg(top, right); break; case 12: addSeg(left, right); break;
+          case 13: addSeg(bottom, right); break; case 14: addSeg(bottom, left); break;
+        }
+      }
+    }
+    const coordKey = (x, y) => `${x.toFixed(6)},${y.toFixed(6)}`;
+    const pointToSeg = new Map();
+    for (let i = 0; i < allSegments.length; i++) {
+      const s = allSegments[i];
+      const k1 = coordKey(s.x1, s.y1), k2 = coordKey(s.x2, s.y2);
+      if (!pointToSeg.has(k1)) pointToSeg.set(k1, []);
+      if (!pointToSeg.has(k2)) pointToSeg.set(k2, []);
+      pointToSeg.get(k1).push(i); pointToSeg.get(k2).push(i);
+    }
+    const used = new Set();
+    for (let i = 0; i < allSegments.length; i++) {
+      if (used.has(i)) continue; const pts = [];
+      let curIdx = i, cur = allSegments[i]; used.add(curIdx);
+      let start = { x: cur.x1, y: cur.y1 }, curr = { x: cur.x2, y: cur.y2 };
+      pts.push({ x: start.x, y: start.y }); pts.push({ x: curr.x, y: curr.y });
+      let found = true, iters = 0;
+      while (found && iters < allSegments.length + 10) {
+        found = false; iters++; const key = coordKey(curr.x, curr.y);
+        const cands = pointToSeg.get(key) || [];
+        for (const cIdx of cands) {
+          if (used.has(cIdx)) continue; const cSeg = allSegments[cIdx];
+          const ck1 = coordKey(cSeg.x1, cSeg.y1), ck2 = coordKey(cSeg.x2, cSeg.y2);
+          let next = null;
+          if (ck1 === key) next = { x: cSeg.x2, y: cSeg.y2 };
+          else if (ck2 === key) next = { x: cSeg.x1, y: cSeg.y1 };
+          if (next) { used.add(cIdx); pts.push({ x: next.x, y: next.y }); curr = next; found = true; break; }
+        }
+      }
+      const dist = Math.hypot(curr.x - start.x, curr.y - start.y);
+      const isClosed = dist < 0.5;
+      if (pts.length >= 3) contours.push({ points: pts, isClosed });
+    }
+    return contours;
   },
   applySimplificationAndRender() {
     if (!this.State.originalContours || this.State.originalContours.length === 0) return;
-    let totalOriginalPts = 0, totalCurrentPts = 0, totalPaths = [], totalCounts = { L: 0, Q: 0, C: 0, A: 0 }, totalDiff = 0;
-    for (const contour of this.State.originalContours) {
+    let totalOriginalPts = 0, totalCurrentPts = 0, totalPaths = [], totalCounts = { L: 0, Q: 0, C: 0, A: 0 };
+    for (let i = 0; i < this.State.originalContours.length; i++) {
+      const contour = this.State.originalContours[i];
       const originalPts = contour.points, closed = contour.isClosed;
       totalOriginalPts += originalPts.length;
       let simplifiedIndices = originalPts.map((_, i) => i);
@@ -1901,49 +2753,32 @@ const Tracer = {
         simplifiedIndices = simplifyCurveToCountIndices(simplifiedIndices, originalPts, targetCount, closed);
       }
       const cr = fitCurvesForRenderingIndices(simplifiedIndices, originalPts, closed, this.State.mode === 'line');
-      totalPaths.push(cr.path);
+      const color = this.State.colors[i] || '#000000';
+      const fillAttr = this.State.colorful && closed ? `fill="${color}"` : 'fill="none"';
+      const strokeAttr = this.State.colorful ? 'stroke="none"' : `stroke="${color}"`;
+      totalPaths.push(`<path d="${cr.path}" ${fillAttr} ${strokeAttr} stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>`);
       totalCurrentPts += simplifiedIndices.length;
       totalCounts.L += cr.counts.L; totalCounts.Q += cr.counts.Q; totalCounts.C += cr.counts.C; totalCounts.A += cr.counts.A;
-      totalDiff += computeCurveDifference(originalPts, cr, closed);
     }
-    this.renderSvg(totalPaths.join(' '));
+    this.renderSvg(totalPaths.join('\n  '));
     const reduction = totalOriginalPts > 0 ? Math.round((1 - totalCurrentPts / totalOriginalPts) * 100) : 0;
-    const avgDiff = this.State.originalContours.length > 0 ? totalDiff / this.State.originalContours.length : 0;
-    
-    document.getElementById('trace-status').textContent = `${avgDiff.toFixed(1)}% diff`;
-    document.getElementById('trace-stat-original').textContent = `${totalOriginalPts} pts`;
-    document.getElementById('trace-stat-current').textContent = `${totalCurrentPts} pts`;
-    
-    const redEl = document.getElementById('trace-stat-reduction');
-    redEl.textContent = `${reduction}%`;
-    redEl.className = getReductionClass(reduction);
-    
-    document.getElementById('trace-stat-contours').textContent = `${this.State.originalContours.length}`;
-    document.getElementById('trace-count-L').textContent = `L ${totalCounts.L}`;
-    document.getElementById('trace-count-Q').textContent = `Q ${totalCounts.Q}`;
-    document.getElementById('trace-count-C').textContent = `C ${totalCounts.C}`;
-    document.getElementById('trace-count-A').textContent = `A ${totalCounts.A}`;
-    document.getElementById('btn-export-trace').disabled = false;
+    document.getElementById('image-status').textContent = `${this.State.originalContours.length} contours`;
+    document.getElementById('image-stat-original').textContent = `${totalOriginalPts} pts`;
+    document.getElementById('image-stat-current').textContent = `${totalCurrentPts} pts`;
+    const redEl = document.getElementById('image-stat-reduction');
+    redEl.textContent = `${reduction}%`; redEl.className = getReductionClass(reduction);
+    document.getElementById('image-stat-contours').textContent = `${this.State.originalContours.length}`;
+    document.getElementById('btn-export-image').disabled = false;
   },
-  renderSvg(pathData) {
-    const overlay = document.getElementById('preview-overlay-trace');
+  renderSvg(pathsHtml) {
+    const overlay = document.getElementById('preview-overlay-image');
     overlay.innerHTML = '';
-    const svgEl = document.createElementNS(SVG_NS, 'svg');
-    svgEl.setAttribute('xmlns', SVG_NS);
-    const vb = this.PanelView.trace;
-    svgEl.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
-    const img = document.getElementById('preview-image-trace');
-    if (img.style.display !== 'none') {
-      svgEl.style.width = img.offsetWidth + 'px'; svgEl.style.height = img.offsetHeight + 'px';
-    }
-    const pathEl = document.createElementNS(SVG_NS, 'path');
-    pathEl.setAttribute('d', pathData);
-    pathEl.setAttribute('fill', 'none');
-    pathEl.setAttribute('stroke', '#fbbf24');
-    pathEl.setAttribute('stroke-width', '1.5');
-    pathEl.setAttribute('stroke-linejoin', 'round'); pathEl.setAttribute('stroke-linecap', 'round');
-    pathEl.setAttribute('fill-rule', 'evenodd'); pathEl.setAttribute('vector-effect', 'non-scaling-stroke');
-    svgEl.appendChild(pathEl); overlay.appendChild(svgEl);
+    const svgEl = document.createElementNS(this.SVG_NS, 'svg');
+    svgEl.setAttribute('xmlns', this.SVG_NS);
+    svgEl.setAttribute('viewBox', `0 0 ${this.State.viewBox.w} ${this.State.viewBox.h}`);
+    svgEl.style.width = '100%'; svgEl.style.height = '100%';
+    svgEl.innerHTML = pathsHtml;
+    overlay.appendChild(svgEl);
   },
   handleFile(file) {
     if (!file.type.startsWith('image/')) { toast('Please drop an image file', 'warning'); return; }
@@ -1952,10 +2787,10 @@ const Tracer = {
       const img = new Image();
       img.onload = () => {
         this.originalImage = img;
-        const previewImg = document.getElementById('preview-image-trace');
+        const previewImg = document.getElementById('preview-image-image');
         previewImg.src = img.src; previewImg.style.display = 'block';
-        document.getElementById('drop-zone-trace').classList.add('hidden');
-        document.getElementById('preview-wrapper-trace').classList.add('active');
+        document.getElementById('drop-zone-image').classList.add('hidden');
+        document.getElementById('preview-wrapper-image').classList.add('active');
         this.processImage(img);
       };
       img.onerror = () => toast('Failed to load image', 'warning');
@@ -1966,7 +2801,8 @@ const Tracer = {
   exportSvg() {
     if (!this.State.originalContours || this.State.originalContours.length === 0) return;
     let totalPaths = [];
-    for (const contour of this.State.originalContours) {
+    for (let i = 0; i < this.State.originalContours.length; i++) {
+      const contour = this.State.originalContours[i];
       const originalPts = contour.points, closed = contour.isClosed;
       let simplifiedIndices = originalPts.map((_, i) => i);
       if (this.State.mode === 'curve') {
@@ -1976,17 +2812,19 @@ const Tracer = {
         simplifiedIndices = simplifyCurveToCountIndices(simplifiedIndices, originalPts, targetCount, closed);
       }
       const cr = fitCurvesForRenderingIndices(simplifiedIndices, originalPts, closed, this.State.mode === 'line');
-      totalPaths.push(cr.path);
+      const color = this.State.colors[i] || '#000000';
+      const fillAttr = this.State.colorful && closed ? `fill="${color}"` : 'fill="none"';
+      const strokeAttr = this.State.colorful ? 'stroke="none"' : `stroke="${color}"`;
+      totalPaths.push(`<path d="${cr.path}" ${fillAttr} ${strokeAttr} stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>`);
     }
-    const pathData = totalPaths.join(' ');
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="${this.State.viewBox.x} ${this.State.viewBox.y} ${this.State.viewBox.w} ${this.State.viewBox.h}">
-  <path d="${pathData}" fill="none" stroke="#000000" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>
+  ${totalPaths.join('\n  ')}
 </svg>`;
     const blob = new Blob([svg], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url;
-    a.download = `vector-trace-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.svg`;
+    a.download = `vectorized-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.svg`;
     a.click(); URL.revokeObjectURL(url);
     toast('SVG exported successfully', 'success');
   },
@@ -1994,73 +2832,49 @@ const Tracer = {
     this.State.preset = preset;
     this.State.threshold = getPresetValue(this.State.mode, preset);
     this.updateSliderDisplay();
-    document.querySelectorAll('#view-trace .btn-preset').forEach(b => b.classList.toggle('active', b.dataset.preset === preset));
+    document.querySelectorAll('#panel-image .btn-preset').forEach(b => b.classList.toggle('active', b.dataset.preset === preset));
     this.applySimplificationAndRender();
   },
   setMode(mode) {
     this.State.mode = mode;
-    document.querySelectorAll('#view-trace .btn-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    document.querySelectorAll('#panel-image .btn-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
     this.applyPreset(this.State.preset);
     this.updateSliderDisplay();
     this.applySimplificationAndRender();
   },
   updateSliderDisplay() {
-    const pointValEl = document.getElementById('trace-point-value');
-    if (this.State.mode === 'curve') {
-      pointValEl.textContent = 'Fit';
-    } else {
-      pointValEl.textContent = `${this.State.pointPct}%`;
-    }
-    document.getElementById('trace-threshold-value').textContent = `${this.State.threshold.toFixed(1)}%`;
-    document.getElementById('trace-point-slider').value = Math.max(1, Math.min(100, this.State.pointPct));
-    document.getElementById('trace-threshold-slider').value = Math.max(0, Math.min(30, this.State.threshold));
-    const pointGroup = document.getElementById('trace-point-group');
+    const pointValEl = document.getElementById('image-point-value');
+    if (this.State.mode === 'curve') pointValEl.textContent = 'Fit';
+    else pointValEl.textContent = `${this.State.pointPct}%`;
+    document.getElementById('image-threshold-value').textContent = `${this.State.threshold.toFixed(1)}%`;
+    document.getElementById('image-point-slider').value = Math.max(1, Math.min(100, this.State.pointPct));
+    document.getElementById('image-threshold-slider').value = Math.max(0, Math.min(30, this.State.threshold));
+    const pointGroup = document.getElementById('image-point-group');
     if (this.State.mode === 'curve') pointGroup.classList.add('disabled');
     else pointGroup.classList.remove('disabled');
+    const isTarget = this.State.targetColorEnabled;
+    document.getElementById('target-color-row').classList.toggle('disabled', !isTarget);
+    document.getElementById('target-tolerance-group').style.display = isTarget ? 'flex' : 'none';
+    document.getElementById('color-threshold-group').style.display = isTarget ? 'none' : 'flex';
   },
-  setupZoomPan() {
-    const container = document.getElementById('viewport-trace');
-    let panState = null;
-    container.addEventListener('wheel', (e) => {
-      if (!e.ctrlKey) return; e.preventDefault();
-      const vb = this.PanelView.trace;
-      const factor = e.deltaY > 0 ? 1.15 : 0.87;
-      const origDiag = Math.hypot(this.State.viewBox.w, this.State.viewBox.h);
-      const newDiag = Math.hypot(vb.w, vb.h) * factor;
-      if (newDiag < origDiag * 0.02 || newDiag > origDiag * 5) return;
-      const cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
-      vb.w *= factor; vb.h *= factor;
-      vb.x = cx - vb.w / 2; vb.y = cy - vb.h / 2;
-      this.applyPanelView();
-      if (this.originalImage) this.renderSvg(document.querySelector('#preview-overlay-trace path')?.getAttribute('d') || '');
-    }, { passive: false });
-    container.addEventListener('mousedown', (e) => {
-      if (e.button === 1) { e.preventDefault(); panState = { startX: e.clientX, startY: e.clientY, vb: { ...this.PanelView.trace } }; }
-    });
-    container.addEventListener('mousemove', (e) => {
-      if (!panState) return; const rect = container.getBoundingClientRect();
-      this.PanelView.trace.x = panState.vb.x - (e.clientX - panState.startX) * (panState.vb.w / rect.width);
-      this.PanelView.trace.y = panState.vb.y - (e.clientY - panState.startY) * (panState.vb.h / rect.height);
-      this.applyPanelView();
-      if (this.originalImage) this.renderSvg(document.querySelector('#preview-overlay-trace path')?.getAttribute('d') || '');
-    });
-    const endPan = (e) => { if (e.button === 1) panState = null; };
-    container.addEventListener('mouseup', endPan);
-    container.addEventListener('mouseleave', () => { panState = null; });
-    document.querySelector('#viewport-trace .btn-reset-zoom').addEventListener('click', () => {
-      this.PanelView.trace = { ...this.State.viewBox };
-      this.applyPanelView();
-      if (this.originalImage) this.renderSvg(document.querySelector('#preview-overlay-trace path')?.getAttribute('d') || '');
-    });
-  },
-  applyPanelView() {
-    const vb = this.PanelView.trace;
-    const svg = document.querySelector('#preview-overlay-trace svg');
-    if (svg) svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  updateViewMode() {
+    const img = document.getElementById('preview-image-image');
+    const overlay = document.getElementById('preview-overlay-image');
+    const toggleImgBtn = document.getElementById('btn-toggle-img-image');
+    toggleImgBtn.classList.remove('disabled');
+    switch(this.State.viewMode) {
+      case 'image':
+        img.style.opacity = '1'; overlay.style.opacity = '0'; toggleImgBtn.classList.add('disabled'); break;
+      case 'vector':
+        img.style.opacity = '0'; overlay.style.opacity = '1'; toggleImgBtn.classList.add('disabled'); break;
+      case 'both':
+      default:
+        img.style.opacity = this.State.imgVisible ? '1' : '0'; overlay.style.opacity = '1'; break;
+    }
   },
   setupEventListeners() {
-    const dropZone = document.getElementById('drop-zone-trace');
-    const fileInput = document.getElementById('file-input-trace');
+    const dropZone = document.getElementById('drop-zone-image');
+    const fileInput = document.getElementById('file-input-image');
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
@@ -2070,8 +2884,59 @@ const Tracer = {
     });
     fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) this.handleFile(fileInput.files[0]); });
 
+    document.getElementById('colorful-toggle').addEventListener('change', (e) => {
+      this.State.colorful = e.target.checked;
+      if (this.originalImage) this.processImage(this.originalImage);
+    });
+    document.getElementById('target-color-toggle').addEventListener('change', (e) => {
+      this.State.targetColorEnabled = e.target.checked;
+      this.updateSliderDisplay();
+      if (this.originalImage) this.processImage(this.originalImage);
+    });
+    document.getElementById('bg-color-input-image').addEventListener('input', (e) => {
+      const hex = e.target.value;
+      this.State.targetColor = {
+        r: parseInt(hex.slice(1, 3), 16), g: parseInt(hex.slice(3, 5), 16), b: parseInt(hex.slice(5, 7), 16)
+      };
+      if (this.State.targetColorEnabled && this.originalImage) this.processImage(this.originalImage);
+    });
+
+    document.querySelectorAll('#panel-image .btn-mode').forEach(btn => btn.addEventListener('click', () => this.setMode(btn.dataset.mode)));
+    document.querySelectorAll('#panel-image .btn-preset').forEach(btn => btn.addEventListener('click', () => this.applyPreset(btn.dataset.preset)));
+
+    document.getElementById('target-tolerance-slider').addEventListener('input', (e) => {
+      this.State.targetTolerance = parseInt(e.target.value);
+      document.getElementById('target-tolerance-value').textContent = `${this.State.targetTolerance}%`;
+    });
+    document.getElementById('target-tolerance-slider').addEventListener('change', () => { if (this.originalImage) this.processImage(this.originalImage); });
+    
+    document.getElementById('color-threshold-slider').addEventListener('input', (e) => {
+      this.State.colorThreshold = parseInt(e.target.value);
+      document.getElementById('color-threshold-value').textContent = `${this.State.colorThreshold}%`;
+    });
+    document.getElementById('color-threshold-slider').addEventListener('change', () => { if (this.originalImage) this.processImage(this.originalImage); });
+    
+    document.getElementById('line-width-slider').addEventListener('input', (e) => {
+      this.State.lineWidth = parseInt(e.target.value);
+      document.getElementById('line-width-value').textContent = `${this.State.lineWidth} px`;
+    });
+    document.getElementById('line-width-slider').addEventListener('change', () => { if (this.originalImage) this.processImage(this.originalImage); });
+
+    document.getElementById('image-point-slider').addEventListener('input', (e) => {
+      this.State.pointPct = parseInt(e.target.value);
+      if (this.State.mode === 'line') document.getElementById('image-point-value').textContent = `${this.State.pointPct}%`;
+    });
+    document.getElementById('image-point-slider').addEventListener('change', () => this.applySimplificationAndRender());
+    document.getElementById('image-threshold-slider').addEventListener('input', (e) => {
+      this.State.threshold = parseFloat(e.target.value);
+      document.getElementById('image-threshold-value').textContent = `${this.State.threshold.toFixed(1)}%`;
+    });
+    document.getElementById('image-threshold-slider').addEventListener('change', () => this.applySimplificationAndRender());
+    document.getElementById('image-auto-btn').addEventListener('click', () => this.applySimplificationAndRender());
+    document.getElementById('btn-export-image').addEventListener('click', () => this.exportSvg());
+    
     document.addEventListener('paste', (e) => {
-      if (!document.getElementById('view-trace').classList.contains('active')) return;
+      if (!document.getElementById('view-image').classList.contains('active')) return;
       const items = e.clipboardData?.items;
       if (!items) return;
       for (const item of items) {
@@ -2082,46 +2947,36 @@ const Tracer = {
       }
     });
 
-    document.querySelectorAll('#view-trace .btn-bg').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#view-trace .btn-bg').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.State.bgMode = btn.dataset.bg;
-        if (this.originalImage) this.processImage(this.originalImage);
-      });
+    // Viewport Controls
+    new ViewportManager(
+      document.getElementById('viewport-image'),
+      document.getElementById('preview-content-image'),
+      document.getElementById('btn-reset-zoom-image')
+    );
+    document.getElementById('btn-toggle-img-image').addEventListener('click', () => {
+      if (this.State.viewMode !== 'both') return;
+      this.State.imgVisible = !this.State.imgVisible;
+      this.updateViewMode();
+      document.getElementById('eye-open-image').style.display = this.State.imgVisible ? 'block' : 'none';
+      document.getElementById('eye-closed-image').style.display = this.State.imgVisible ? 'none' : 'block';
     });
-    document.getElementById('bg-color-input-trace').addEventListener('input', (e) => {
-      const hex = e.target.value;
-      this.State.bgColor = {
-        r: parseInt(hex.slice(1, 3), 16), g: parseInt(hex.slice(3, 5), 16), b: parseInt(hex.slice(5, 7), 16)
-      };
-      this.State.bgMode = 'auto';
-      document.querySelectorAll('#view-trace .btn-bg').forEach(b => b.classList.remove('active'));
-      document.getElementById('bg-color-label-trace').classList.add('active');
-      if (this.originalImage) this.processImage(this.originalImage);
+    document.getElementById('btn-view-mode-image').addEventListener('click', () => {
+      const modes = ['both', 'image', 'vector'];
+      const currentIdx = modes.indexOf(this.State.viewMode);
+      this.State.viewMode = modes[(currentIdx + 1) % modes.length];
+      this.updateViewMode();
     });
 
-    document.querySelectorAll('#view-trace .btn-mode').forEach(btn => btn.addEventListener('click', () => this.setMode(btn.dataset.mode)));
-    document.querySelectorAll('#view-trace .btn-preset').forEach(btn => btn.addEventListener('click', () => this.applyPreset(btn.dataset.preset)));
-
-    document.getElementById('trace-point-slider').addEventListener('input', (e) => {
-      this.State.pointPct = parseInt(e.target.value);
-      if (this.State.mode === 'line') document.getElementById('trace-point-value').textContent = `${this.State.pointPct}%`;
+    makeEditable('image-point-value', {
+      getValue: () => this.State.pointPct,
+      setValue: (v) => { this.State.pointPct = v; this.updateSliderDisplay(); },
+      min: 0.01, max: 100, format: (v) => `${v}%`
     });
-    document.getElementById('trace-point-slider').addEventListener('change', () => this.applySimplificationAndRender());
-    document.getElementById('trace-threshold-slider').addEventListener('input', (e) => {
-      this.State.threshold = parseFloat(e.target.value);
-      document.getElementById('trace-threshold-value').textContent = `${this.State.threshold.toFixed(1)}%`;
+    makeEditable('image-threshold-value', {
+      getValue: () => this.State.threshold,
+      setValue: (v) => { this.State.threshold = v; this.updateSliderDisplay(); this.applySimplificationAndRender(); },
+      min: 0, max: 100, format: (v) => `${v.toFixed(1)}%`
     });
-    document.getElementById('trace-threshold-slider').addEventListener('change', () => this.applySimplificationAndRender());
-    document.getElementById('trace-auto-btn').addEventListener('click', () => this.applySimplificationAndRender());
-    document.getElementById('btn-export-trace').addEventListener('click', () => this.exportSvg());
-    document.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's' && !document.getElementById('btn-export-trace').disabled && document.getElementById('view-trace').classList.contains('active')) {
-        e.preventDefault(); this.exportSvg();
-      }
-    });
-    this.setupZoomPan();
   },
   init() {
     this.setupEventListeners();
@@ -2130,9 +2985,595 @@ const Tracer = {
   }
 };
 
+// ============================================================
+// TOOL 4: PDF EXTRACTOR
+// ============================================================
+const PDFExtractor = {
+  State: {
+    pdfDoc: null,
+    currentPage: 1,
+    totalPages: 0,
+    rawSvg: null,
+    originalContours: [], closed: [], colors: [],
+    viewBox: { x: 0, y: 0, w: 500, h: 500 },
+    threshold: 0.1, pointPct: 100,
+    mode: 'curve', preset: 'quality',
+    isProcessing: false,
+    imgVisible: true,
+    viewMode: 'both',
+    deleteMode: false,
+    simplifyEnabled: false,
+    extractColors: true,
+    sampleResolution: 400
+  },
+  SVG_NS: 'http://www.w3.org/2000/svg',
+
+  getTolFromThreshold(threshold) {
+    const diag = Math.hypot(this.State.viewBox.w, this.State.viewBox.h);
+    return (threshold / 100) * diag;
+  },
+  async handleFile(file) {
+    if (file.type !== 'application/pdf') { toast('Please load a PDF file', 'warning'); return; }
+    if (this.State.isProcessing) return;
+    this.State.isProcessing = true;
+    document.getElementById('pdf-processing').classList.add('active');
+    document.getElementById('pdf-status').textContent = 'Reading PDF...';
+    await sleep(50);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      this.State.pdfDoc = pdf;
+      this.State.totalPages = pdf.numPages;
+      this.State.currentPage = 1;
+      document.getElementById('drop-zone-pdf').classList.add('hidden');
+      document.getElementById('preview-wrapper-pdf').classList.add('active');
+      document.getElementById('btn-reset-zoom-pdf').style.display = 'flex';
+      document.getElementById('btn-toggle-img-pdf').style.display = 'flex';
+      document.getElementById('btn-view-mode-pdf').style.display = 'flex';
+      document.getElementById('btn-delete-mode').style.display = 'flex';
+      document.getElementById('hint-bar-pdf').style.display = 'block';
+      await this.loadPage(1);
+    } catch (err) {
+      console.error(err);
+      toast('Failed to read PDF. It might be corrupted or encrypted.', 'warning');
+    } finally {
+      this.State.isProcessing = false;
+      document.getElementById('pdf-processing').classList.remove('active');
+    }
+  },
+  async loadPage(pageNum) {
+    if (!this.State.pdfDoc) return;
+    document.getElementById('pdf-processing').classList.add('active');
+    document.getElementById('pdf-status').textContent = `Extracting Page ${pageNum}...`;
+    await sleep(50);
+    try {
+      const page = await this.State.pdfDoc.getPage(pageNum);
+      const baseViewport = page.getViewport({ scale: 1 });
+      const maxDim = Math.max(baseViewport.width, baseViewport.height);
+      const scale = maxDim > 1500 ? 1500 / maxDim : 1.5;
+      const viewport = page.getViewport({ scale });
+
+      const canvas = document.getElementById('processingCanvasPdf');
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, viewport.width, viewport.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      
+      const imgDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      document.getElementById('preview-image-pdf').src = imgDataUrl;
+
+      const opList = await page.getOperatorList();
+      const svgGraphics = new pdfjsLib.SVGGraphics(page.commonObjs, page.objs);
+      const svg = await svgGraphics.getSVG(opList, viewport);
+      this.State.rawSvg = svg;
+      this.State.originalContours = [];
+      this.State.viewBox = { x: 0, y: 0, w: viewport.width, h: viewport.height };
+      this.State.currentPage = pageNum;
+
+      this.updatePageControls();
+      
+      if (this.State.simplifyEnabled) {
+        this.clearViewAndStats();
+        toast(`Loaded page ${pageNum}. Press Calculate to simplify.`, 'success');
+      } else {
+        this.applySimplificationAndRender();
+        toast(`Extracted page ${pageNum}`, 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      toast('Extraction failed for this page.', 'warning');
+    } finally {
+      this.State.isProcessing = false;
+      document.getElementById('pdf-processing').classList.remove('active');
+    }
+  },
+  clearViewAndStats() {
+    document.getElementById('preview-overlay-pdf').innerHTML = '';
+    document.getElementById('pdf-stat-original').textContent = '— pts';
+    document.getElementById('pdf-stat-current').textContent = '— pts';
+    document.getElementById('pdf-stat-reduction').textContent = '— %';
+    document.getElementById('pdf-stat-paths').textContent = '—';
+    document.getElementById('pdf-count-L').textContent = 'L 0';
+    document.getElementById('pdf-count-Q').textContent = 'Q 0';
+    document.getElementById('pdf-count-C').textContent = 'C 0';
+    document.getElementById('pdf-count-A').textContent = 'A 0';
+    document.getElementById('btn-export-pdf').disabled = true;
+  },
+  samplePathsFromSvg() {
+    if (!this.State.rawSvg) return;
+    const svg = this.State.rawSvg;
+    const w = this.State.viewBox.w, h = this.State.viewBox.h;
+    svg.style.position = 'absolute';
+    svg.style.left = '-9999px';
+    svg.style.top = '0';
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    document.body.appendChild(svg);
+
+    const paths = svg.querySelectorAll('path, line, rect, polygon, circle, ellipse');
+    const contours = [];
+    paths.forEach(p => {
+      try {
+        const len = p.getTotalLength ? p.getTotalLength() : 0;
+        if (len > 1) {
+          const pts = [];
+          const maxPts = this.State.sampleResolution;
+          const step = Math.max(0.1, len / maxPts);
+          const ctm = p.getCTM();
+          if (!ctm) return;
+          const svgPoint = svg.createSVGPoint();
+          for (let i = 0; i <= len; i += step) {
+            const rawPt = p.getPointAtLength(i);
+            svgPoint.x = rawPt.x;
+            svgPoint.y = rawPt.y;
+            const transformedPt = svgPoint.matrixTransform(ctm);
+            pts.push({x: transformedPt.x, y: transformedPt.y});
+          }
+          if (pts.length > 2) {
+            let isClosed = false;
+            const dx = pts[0].x - pts[pts.length-1].x;
+            const dy = pts[0].y - pts[pts.length-1].y;
+            if (Math.hypot(dx, dy) < 3) isClosed = true;
+            let color = '#000000';
+            if (this.State.extractColors) {
+              const style = window.getComputedStyle(p);
+              const strokeAttr = p.getAttribute('stroke');
+              const fillAttr = p.getAttribute('fill');
+              const styleStroke = style.stroke;
+              if (strokeAttr && strokeAttr !== 'none') color = strokeAttr;
+              else if (styleStroke && styleStroke !== 'none' && styleStroke !== 'rgb(0, 0, 0)') color = styleStroke;
+              else if (fillAttr && fillAttr !== 'none') color = fillAttr;
+            }
+            contours.push({ points: pts, isClosed, color });
+          }
+        }
+      } catch (e) { }
+    });
+    document.body.removeChild(svg);
+    this.State.originalContours = contours.map(c => ({ points: c.points, isClosed: c.isClosed }));
+    this.State.colors = contours.map(c => c.color || '#000000');
+  },
+  updatePageControls() {
+    document.getElementById('page-info').textContent = `Page ${this.State.currentPage} / ${this.State.totalPages}`;
+    document.getElementById('btn-prev-page').disabled = this.State.currentPage <= 1;
+    document.getElementById('btn-next-page').disabled = this.State.currentPage >= this.State.totalPages;
+  },
+  applySimplificationAndRender() {
+    if (!this.State.rawSvg) return;
+    const overlay = document.getElementById('preview-overlay-pdf');
+    overlay.innerHTML = '';
+    const svgEl = document.createElementNS(this.SVG_NS, 'svg');
+    svgEl.setAttribute('xmlns', this.SVG_NS);
+    svgEl.setAttribute('viewBox', `0 0 ${this.State.viewBox.w} ${this.State.viewBox.h}`);
+    svgEl.style.width = '100%'; svgEl.style.height = '100%';
+
+    let totalPaths = [], totalOriginalPts = 0, totalCurrentPts = 0, totalCounts = { L: 0, Q: 0, C: 0, A: 0 }, pathCount = 0;
+
+    if (!this.State.simplifyEnabled) {
+      const tempSvg = this.State.rawSvg;
+      tempSvg.style.position = 'absolute';
+      tempSvg.style.left = '-9999px';
+      tempSvg.style.top = '0';
+      tempSvg.setAttribute('width', this.State.viewBox.w);
+      tempSvg.setAttribute('height', this.State.viewBox.h);
+      document.body.appendChild(tempSvg);
+      const bakedData = extractBakedPaths(tempSvg, this.State.extractColors);
+      document.body.removeChild(tempSvg);
+      totalPaths.push(bakedData.html);
+      pathCount = bakedData.count;
+      totalOriginalPts = pathCount; totalCurrentPts = pathCount; totalCounts.L = pathCount;
+    } else {
+      if (this.State.originalContours.length === 0) this.samplePathsFromSvg();
+      for (let i = 0; i < this.State.originalContours.length; i++) {
+        const contour = this.State.originalContours[i];
+        const originalPts = contour.points, closed = contour.isClosed;
+        totalOriginalPts += originalPts.length;
+        let simplifiedIndices = originalPts.map((_, i) => i);
+        if (this.State.mode === 'curve') {
+          const tol = this.getTolFromThreshold(this.State.threshold);
+          simplifiedIndices = simplifyCurveAutoIndices(simplifiedIndices, originalPts, tol, closed);
+        } else {
+          const targetCount = Math.max(2, Math.round((this.State.pointPct / 100) * originalPts.length));
+          simplifiedIndices = simplifyCurveToCountIndices(simplifiedIndices, originalPts, targetCount, closed);
+        }
+        const cr = fitCurvesForRenderingIndices(simplifiedIndices, originalPts, closed, this.State.mode === 'line');
+        const color = this.State.colors[i] || '#000000';
+        const fillAttr = closed && color !== '#000000' ? `fill="${color}"` : 'fill="none"';
+        const strokeAttr = `stroke="${color}"`;
+        totalPaths.push(`<path data-idx="${i}" d="${cr.path}" ${fillAttr} ${strokeAttr} stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>`);
+        totalCurrentPts += simplifiedIndices.length;
+        totalCounts.L += cr.counts.L; totalCounts.Q += cr.counts.Q; totalCounts.C += cr.counts.C; totalCounts.A += cr.counts.A;
+      }
+      pathCount = this.State.originalContours.length;
+    }
+    svgEl.innerHTML = totalPaths.join('\n  ');
+    overlay.appendChild(svgEl);
+
+    const reduction = totalOriginalPts > 0 ? Math.round((1 - totalCurrentPts / totalOriginalPts) * 100) : 0;
+    document.getElementById('pdf-status').textContent = `Page ${this.State.currentPage}: ${this.State.simplifyEnabled ? 'Simplified' : 'Lossless'}`;
+    document.getElementById('pdf-stat-original').textContent = this.State.simplifyEnabled ? `${totalOriginalPts} pts` : `${totalOriginalPts} paths`;
+    document.getElementById('pdf-stat-current').textContent = this.State.simplifyEnabled ? `${totalCurrentPts} pts` : `${totalCurrentPts} paths`;
+    const redEl = document.getElementById('pdf-stat-reduction');
+    redEl.textContent = this.State.simplifyEnabled ? `${reduction}%` : `0%`;
+    redEl.className = this.State.simplifyEnabled ? getReductionClass(reduction) : 'stat-value accent';
+    document.getElementById('pdf-stat-paths').textContent = `${pathCount}`;
+    document.getElementById('pdf-count-L').textContent = `L ${totalCounts.L}`;
+    document.getElementById('pdf-count-Q').textContent = `Q ${totalCounts.Q}`;
+    document.getElementById('pdf-count-C').textContent = `C ${totalCounts.C}`;
+    document.getElementById('pdf-count-A').textContent = `A ${totalCounts.A}`;
+    document.getElementById('btn-export-pdf').disabled = false;
+    this.updateControlsState();
+  },
+  exportSvg() {
+    if (!this.State.rawSvg) return;
+    let totalPaths = [];
+    if (!this.State.simplifyEnabled) {
+      const tempSvg = this.State.rawSvg;
+      tempSvg.style.position = 'absolute';
+      tempSvg.style.left = '-9999px';
+      tempSvg.style.top = '0';
+      tempSvg.setAttribute('width', this.State.viewBox.w);
+      tempSvg.setAttribute('height', this.State.viewBox.h);
+      document.body.appendChild(tempSvg);
+      const bakedData = extractBakedPaths(tempSvg, this.State.extractColors);
+      document.body.removeChild(tempSvg);
+      totalPaths.push(bakedData.html);
+    } else {
+      for (let i = 0; i < this.State.originalContours.length; i++) {
+        const contour = this.State.originalContours[i];
+        const originalPts = contour.points, closed = contour.isClosed;
+        let simplifiedIndices = originalPts.map((_, i) => i);
+        if (this.State.mode === 'curve') {
+          simplifiedIndices = simplifyCurveAutoIndices(simplifiedIndices, originalPts, this.getTolFromThreshold(this.State.threshold), closed);
+        } else {
+          const targetCount = Math.max(2, Math.round((this.State.pointPct / 100) * originalPts.length));
+          simplifiedIndices = simplifyCurveToCountIndices(simplifiedIndices, originalPts, targetCount, closed);
+        }
+        const cr = fitCurvesForRenderingIndices(simplifiedIndices, originalPts, closed, this.State.mode === 'line');
+        const color = this.State.colors[i] || '#000000';
+        const fillAttr = closed && color !== '#000000' ? `fill="${color}"` : 'fill="none"';
+        const strokeAttr = `stroke="${color}"`;
+        totalPaths.push(`<path d="${cr.path}" ${fillAttr} ${strokeAttr} stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>`);
+      }
+    }
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${this.State.viewBox.w} ${this.State.viewBox.h}">
+  ${totalPaths.join('\n  ')}
+</svg>`;
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `pdf-page-${this.State.currentPage}-vectorized.svg`;
+    a.click(); URL.revokeObjectURL(url);
+    toast('SVG exported successfully', 'success');
+  },
+  applyPreset(preset) {
+    this.State.preset = preset;
+    this.State.threshold = getPresetValue(this.State.mode, preset);
+    this.updateSliderDisplay();
+    document.querySelectorAll('#panel-pdf .btn-preset').forEach(b => b.classList.toggle('active', b.dataset.preset === preset));
+  },
+  setMode(mode) {
+    this.State.mode = mode;
+    document.querySelectorAll('#panel-pdf .btn-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    this.applyPreset(this.State.preset);
+    this.updateSliderDisplay();
+  },
+  updateSliderDisplay() {
+    const pointValEl = document.getElementById('pdf-point-value');
+    if (this.State.mode === 'curve') pointValEl.textContent = 'Fit';
+    else pointValEl.textContent = `${this.State.pointPct}%`;
+    document.getElementById('pdf-threshold-value').textContent = `${this.State.threshold.toFixed(1)}%`;
+    document.getElementById('pdf-point-slider').value = Math.max(1, Math.min(100, this.State.pointPct));
+    document.getElementById('pdf-threshold-slider').value = Math.max(0, Math.min(30, this.State.threshold));
+    document.getElementById('pdf-sample-value').textContent = `${this.State.sampleResolution}`;
+    document.getElementById('pdf-sample-slider').value = Math.max(50, Math.min(5000, this.State.sampleResolution));
+  },
+  updateControlsState() {
+    const simplifyEnabled = this.State.simplifyEnabled;
+    document.getElementById('pdf-point-group').classList.toggle('disabled', !simplifyEnabled);
+    document.getElementById('pdf-sample-group').classList.toggle('disabled', !simplifyEnabled);
+    document.querySelectorAll('#panel-pdf .btn-mode, #panel-pdf .btn-preset, #pdf-threshold-slider, #pdf-auto-btn').forEach(el => {
+      el.classList.toggle('disabled', !simplifyEnabled);
+      el.disabled = !simplifyEnabled;
+    });
+    document.getElementById('btn-calc-pdf').disabled = !simplifyEnabled;
+  },
+  updateViewMode() {
+    const img = document.getElementById('preview-image-pdf');
+    const overlay = document.getElementById('preview-overlay-pdf');
+    const toggleImgBtn = document.getElementById('btn-toggle-img-pdf');
+    toggleImgBtn.classList.remove('disabled');
+    switch(this.State.viewMode) {
+      case 'image':
+        img.style.opacity = '1'; overlay.style.opacity = '0'; toggleImgBtn.classList.add('disabled'); break;
+      case 'vector':
+        img.style.opacity = '0'; overlay.style.opacity = '1'; toggleImgBtn.classList.add('disabled'); break;
+      case 'both':
+      default:
+        img.style.opacity = this.State.imgVisible ? '1' : '0'; overlay.style.opacity = '1'; break;
+    }
+  },
+  setupEventListeners() {
+    const dropZone = document.getElementById('drop-zone-pdf');
+    const fileInput = document.getElementById('file-input-pdf');
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault(); dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length > 0) this.handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) this.handleFile(fileInput.files[0]); });
+
+    document.getElementById('btn-prev-page').addEventListener('click', () => {
+      if (this.State.currentPage > 1) this.loadPage(this.State.currentPage - 1);
+    });
+    document.getElementById('btn-next-page').addEventListener('click', () => {
+      if (this.State.currentPage < this.State.totalPages) this.loadPage(this.State.currentPage + 1);
+    });
+
+    document.getElementById('btn-calc-pdf').addEventListener('click', () => {
+      this.State.originalContours = [];
+      this.applySimplificationAndRender();
+      toast('Recalculated', 'success');
+    });
+
+    document.getElementById('simplify-toggle').addEventListener('change', (e) => {
+      this.State.simplifyEnabled = e.target.checked;
+      this.updateControlsState();
+      if (this.State.simplifyEnabled) {
+        this.clearViewAndStats();
+        toast('Simplify enabled. Press Calculate to process.', 'info');
+      } else {
+        this.applySimplificationAndRender();
+      }
+    });
+    
+    document.getElementById('color-toggle').addEventListener('change', (e) => {
+      this.State.extractColors = e.target.checked;
+      this.State.originalContours = [];
+      if (this.State.simplifyEnabled) {
+        this.clearViewAndStats();
+        toast('Color setting changed. Press Calculate to process.', 'info');
+      } else {
+        this.applySimplificationAndRender();
+      }
+    });
+
+    document.querySelectorAll('#panel-pdf .btn-mode').forEach(btn => btn.addEventListener('click', () => this.setMode(btn.dataset.mode)));
+    document.querySelectorAll('#panel-pdf .btn-preset').forEach(btn => btn.addEventListener('click', () => this.applyPreset(btn.dataset.preset)));
+
+    document.getElementById('pdf-sample-slider').addEventListener('input', (e) => {
+      this.State.sampleResolution = parseInt(e.target.value);
+      document.getElementById('pdf-sample-value').textContent = `${this.State.sampleResolution}`;
+    });
+    document.getElementById('pdf-point-slider').addEventListener('input', (e) => {
+      this.State.pointPct = parseInt(e.target.value);
+      if (this.State.mode === 'line') document.getElementById('pdf-point-value').textContent = `${this.State.pointPct}%`;
+    });
+    document.getElementById('pdf-threshold-slider').addEventListener('input', (e) => {
+      this.State.threshold = parseFloat(e.target.value);
+      document.getElementById('pdf-threshold-value').textContent = `${this.State.threshold.toFixed(1)}%`;
+    });
+    document.getElementById('pdf-auto-btn').addEventListener('click', () => {
+      this.State.originalContours = [];
+      this.applySimplificationAndRender();
+    });
+    document.getElementById('btn-export-pdf').addEventListener('click', () => this.exportSvg());
+    
+    // Viewport Controls
+    new ViewportManager(
+      document.getElementById('viewport-pdf'),
+      document.getElementById('preview-content-pdf'),
+      document.getElementById('btn-reset-zoom-pdf')
+    );
+    document.getElementById('btn-toggle-img-pdf').addEventListener('click', () => {
+      if (this.State.viewMode !== 'both') return;
+      this.State.imgVisible = !this.State.imgVisible;
+      this.updateViewMode();
+      document.getElementById('eye-open-pdf').style.display = this.State.imgVisible ? 'block' : 'none';
+      document.getElementById('eye-closed-pdf').style.display = this.State.imgVisible ? 'none' : 'block';
+    });
+    document.getElementById('btn-view-mode-pdf').addEventListener('click', () => {
+      const modes = ['both', 'image', 'vector'];
+      const currentIdx = modes.indexOf(this.State.viewMode);
+      this.State.viewMode = modes[(currentIdx + 1) % modes.length];
+      this.updateViewMode();
+    });
+
+    document.getElementById('btn-delete-mode').addEventListener('click', () => {
+      this.State.deleteMode = !this.State.deleteMode;
+      document.getElementById('viewport-pdf').classList.toggle('delete-mode', this.State.deleteMode);
+      document.getElementById('btn-delete-mode').classList.toggle('active', this.State.deleteMode);
+    });
+
+    document.getElementById('viewport-pdf').addEventListener('click', (e) => {
+      if (!this.State.deleteMode || !this.State.simplifyEnabled) return;
+      const target = e.target;
+      if (target.tagName === 'path') {
+        const idx = parseInt(target.getAttribute('data-idx'));
+        if (!isNaN(idx)) {
+          this.State.originalContours.splice(idx, 1);
+          this.State.colors.splice(idx, 1);
+          this.applySimplificationAndRender();
+          toast(`Deleted path ${idx + 1}`, 'info');
+        }
+      }
+    });
+
+    makeEditable('pdf-point-value', {
+      getValue: () => this.State.pointPct,
+      setValue: (v) => { this.State.pointPct = v; this.updateSliderDisplay(); },
+      min: 1, max: 100, format: (v) => `${v}%`
+    });
+    makeEditable('pdf-threshold-value', {
+      getValue: () => this.State.threshold,
+      setValue: (v) => { this.State.threshold = v; this.updateSliderDisplay(); },
+      min: 0, max: 100, format: (v) => `${v.toFixed(1)}%`
+    });
+    makeEditable('pdf-sample-value', {
+      getValue: () => this.State.sampleResolution,
+      setValue: (v) => { this.State.sampleResolution = Math.max(1, Math.round(v)); this.updateSliderDisplay(); },
+      min: 1, format: (v) => `${v}`
+    });
+  },
+  init() {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+    this.setupEventListeners();
+    this.applyPreset('quality');
+    this.updateSliderDisplay();
+    this.updateControlsState();
+  }
+};
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
+function screenToSVG(svg, clientX, clientY) {
+  const pt = svg.createSVGPoint(); pt.x = clientX; pt.y = clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function computeCurveDifference(original, curveResult, closed) {
+  if (!curveResult.segments.length) return 0;
+  const curvePts = curvePathToPoints(curveResult.segments, curveResult.startPoint, 16);
+  const bbox = getBBox(original); const diag = Math.hypot(bbox.w, bbox.h);
+  if (diag === 0) return 0;
+  let totalDist = 0;
+  for (const p of original) {
+    let minD = Infinity;
+    for (const c of curvePts) { const d = Math.hypot(p.x - c.x, p.y - c.y); if (d < minD) minD = d; }
+    totalDist += minD;
+  }
+  return (totalDist / original.length / diag) * 100;
+}
+function curvePathToPoints(segments, startPoint, samplesPerSeg = 12) {
+  const pts = [{ ...startPoint }]; let current = { ...startPoint };
+  for (const seg of segments) {
+    pts.push(...sampleSegment(current, seg, samplesPerSeg));
+    current = { x: seg.params[seg.params.length - 2], y: seg.params[seg.params.length - 1] };
+  }
+  return pts;
+}
+function sampleSegment(p0, seg, n) {
+  const pts = []; const p = seg.params;
+  for (let i = 1; i <= n; i++) {
+    const t = i / n, u = 1 - t; let x, y;
+    switch (seg.type) {
+      case 'L': x = p0.x + t*(p[0]-p0.x); y = p0.y + t*(p[1]-p0.y); break;
+      case 'Q': x = u*u*p0.x + 2*u*t*p[0] + t*t*p[2]; y = u*u*p0.y + 2*u*t*p[1] + t*t*p[3]; break;
+      case 'C': x = u*u*u*p0.x + 3*u*u*t*p[0] + 3*u*t*t*p[2] + t*t*t*p[4]; y = u*u*u*p0.y + 3*u*u*t*p[1] + 3*u*t*t*p[3] + t*t*t*p[5]; break;
+      case 'A': {
+        if (seg.center) {
+          const a0 = Math.atan2(p0.y - seg.center.y, p0.x - seg.center.x);
+          const a1 = Math.atan2(p[5] - seg.center.y, p[6] - seg.center.x);
+          let span = a1 - a0;
+          if (p[4] === 1) { if (span < 0) span += 2*Math.PI; } else { if (span > 0) span -= 2*Math.PI; }
+          const a = a0 + span * t; x = seg.center.x + seg.r * Math.cos(a); y = seg.center.y + seg.r * Math.sin(a);
+        } else { x = p0.x + t * (p[5] - p0.x); y = p0.y + t * (p[6] - p0.y); }
+        break;
+      }
+    }
+    pts.push({ x, y });
+  }
+  return pts;
+}
+function bakeTransformsInPath(d, matrix) {
+  const tokens = d.match(/[a-zA-Z]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi);
+  if (!tokens) return d;
+  let result = ''; let i = 0;
+  while (i < tokens.length) {
+    const cmd = tokens[i++];
+    if (cmd === 'M' || cmd === 'L' || cmd === 'T') {
+      const x = parseFloat(tokens[i++]); const y = parseFloat(tokens[i++]);
+      const pt = matrix.transformPoint(new DOMPoint(x, y));
+      result += `${cmd} ${pt.x.toFixed(3)} ${pt.y.toFixed(3)} `;
+    } else if (cmd === 'C') {
+      const x1 = parseFloat(tokens[i++]), y1 = parseFloat(tokens[i++]);
+      const x2 = parseFloat(tokens[i++]), y2 = parseFloat(tokens[i++]);
+      const x = parseFloat(tokens[i++]), y = parseFloat(tokens[i++]);
+      const p1 = matrix.transformPoint(new DOMPoint(x1, y1));
+      const p2 = matrix.transformPoint(new DOMPoint(x2, y2));
+      const p3 = matrix.transformPoint(new DOMPoint(x, y));
+      result += `${cmd} ${p1.x.toFixed(3)} ${p1.y.toFixed(3)} ${p2.x.toFixed(3)} ${p2.y.toFixed(3)} ${p3.x.toFixed(3)} ${p3.y.toFixed(3)} `;
+    } else if (cmd === 'Q') {
+      const x1 = parseFloat(tokens[i++]), y1 = parseFloat(tokens[i++]);
+      const x = parseFloat(tokens[i++]), y = parseFloat(tokens[i++]);
+      const p1 = matrix.transformPoint(new DOMPoint(x1, y1));
+      const p2 = matrix.transformPoint(new DOMPoint(x, y));
+      result += `${cmd} ${p1.x.toFixed(3)} ${p1.y.toFixed(3)} ${p2.x.toFixed(3)} ${p2.y.toFixed(3)} `;
+    } else if (cmd === 'A') {
+      const rx = parseFloat(tokens[i++]), ry = parseFloat(tokens[i++]);
+      const angle = parseFloat(tokens[i++]);
+      const largeArc = parseFloat(tokens[i++]), sweep = parseFloat(tokens[i++]);
+      const x = parseFloat(tokens[i++]), y = parseFloat(tokens[i++]);
+      const pt = matrix.transformPoint(new DOMPoint(x, y));
+      result += `${cmd} ${rx} ${ry} ${angle} ${largeArc} ${sweep} ${pt.x.toFixed(3)} ${pt.y.toFixed(3)} `;
+    } else if (cmd === 'Z' || cmd === 'z') {
+      result += 'Z ';
+    } else {
+      i--;
+      const x = parseFloat(tokens[i++]); const y = parseFloat(tokens[i++]);
+      const pt = matrix.transformPoint(new DOMPoint(x, y));
+      result += `L ${pt.x.toFixed(3)} ${pt.y.toFixed(3)} `;
+    }
+  }
+  return result.trim();
+}
+function extractBakedPaths(svgRoot, extractColors) {
+  const paths = svgRoot.querySelectorAll('path, line, rect, polygon, circle, ellipse');
+  let outHtml = ''; let pathCount = 0;
+  paths.forEach((p, idx) => {
+    let d = p.getAttribute('d');
+    if (!d) return;
+    const ctm = p.getCTM();
+    if (!ctm) return;
+    const matrix = new DOMMatrix([ctm.a, ctm.b, ctm.c, ctm.d, ctm.e, ctm.f]);
+    const newD = bakeTransformsInPath(d, matrix);
+    let color = '#000000';
+    if (extractColors) {
+      const style = window.getComputedStyle(p);
+      const strokeAttr = p.getAttribute('stroke');
+      const fillAttr = p.getAttribute('fill');
+      const styleStroke = style.stroke;
+      if (strokeAttr && strokeAttr !== 'none') color = strokeAttr;
+      else if (styleStroke && styleStroke !== 'none' && styleStroke !== 'rgb(0, 0, 0)') color = styleStroke;
+      else if (fillAttr && fillAttr !== 'none') color = fillAttr;
+    }
+    const isFilled = extractColors && p.getAttribute('fill') && p.getAttribute('fill') !== 'none';
+    const fill = isFilled ? `fill="${color}"` : 'fill="none"';
+    const stroke = `stroke="${color}"`;
+    const strokeWidth = 'stroke-width="1.5"';
+    outHtml += `<path data-idx="${idx}" d="${newD}" ${fill} ${stroke} ${strokeWidth} stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd"/>`;
+    pathCount++;
+  });
+  return { html: outHtml, count: pathCount };
+}
+
+// Initialize all tools
+OutlineTracer.init();
 Simplifier.init();
-Tracer.init();
+ImageTracer.init();
+PDFExtractor.init();
 </script>
 </body>
 </html>
